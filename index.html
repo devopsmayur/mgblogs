@@ -3,77 +3,92 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DevOpsMayur | Cloud Architect</title>
+  <title>DevOpsMayur | Cloud Automation</title>
   <style>
-    body {
+    html, body {
       margin: 0;
-      font-family: system-ui, sans-serif;
-      background-color: #f7f7f7;
-      color: #111;
+      padding: 0;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      font-family: 'Courier New', monospace;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
     }
 
-    /* Animated background with code */
-    .background {
+    .background-box {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      height: 200%;
-      font-family: monospace;
-      font-size: 0.85rem;
-      white-space: pre;
-      line-height: 1.6;
-      color: rgba(0, 0, 0, 0.035);
-      pointer-events: none;
-      animation: scroll 80s linear infinite;
+      height: 100%;
+      overflow: hidden;
       z-index: 0;
+    }
+
+    .code-scroll {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      height: 200%;
+      font-size: 0.75rem;
+      white-space: pre;
+      line-height: 1.4;
+      color: rgba(0, 255, 128, 0.08);
+      animation: codeScroll 60s linear infinite;
       padding: 2rem;
     }
 
-    @keyframes scroll {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(-50%); }
+    @keyframes codeScroll {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(0); }
     }
 
     .container {
-      position: relative;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       z-index: 1;
-      max-width: 700px;
-      margin: 10vh auto;
-      background-color: white;
+      background-color: rgba(30, 30, 30, 0.95);
       padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(13, 148, 80, 0.15);
+      text-align: center;
+      max-width: 700px;
+      width: 90%;
     }
 
     h1 {
-      font-size: 2.2rem;
-      margin-bottom: 0.2em;
+      font-size: 2rem;
+      color: #00ff9f;
     }
 
     h2 {
-      font-weight: 400;
       font-size: 1.1rem;
-      color: #555;
+      color: #66ffc2;
+      font-weight: normal;
+      margin-bottom: 1rem;
     }
 
     p {
-      margin-top: 1.2rem;
-      line-height: 1.6;
+      line-height: 1.5;
+      margin-top: 1rem;
     }
 
     ul {
       list-style: none;
-      padding-left: 0;
-      margin-top: 2rem;
+      padding: 0;
+      margin-top: 1.5rem;
     }
 
     li {
-      margin: 0.6rem 0;
+      margin: 0.5rem 0;
     }
 
     a {
-      color: #007acc;
+      color: #00ffcc;
       text-decoration: none;
     }
 
@@ -84,61 +99,55 @@
 </head>
 <body>
 
-  <div class="background">
+  <!-- Background DevOps Code -->
+  <div class="background-box">
+    <div class="code-scroll">
 provider "aws" {
-  region = "us-east-1"
+  region = "us-west-1"
 }
 
-resource "aws_s3_bucket" "static_site" {
-  bucket = "devopsmayur-site"
-  acl    = "public-read"
-}
-
-output "bucket_url" {
-  value = aws_s3_bucket.static_site.website_endpoint
+resource "aws_instance" "app" {
+  ami           = "ami-1234567890abcdef0"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "ExampleApp"
+  }
 }
 
 ---
 
-- name: Install Vault
-  hosts: all
+- name: Install Terraform
+  hosts: localhost
   become: yes
   tasks:
-    - name: Download Vault
+    - name: Download Terraform
       get_url:
-        url: https://releases.hashicorp.com/vault/1.10.3/vault_1.10.3_linux_amd64.zip
-        dest: /tmp/vault.zip
-
-    - name: Unzip Vault
-      unarchive:
-        src: /tmp/vault.zip
-        dest: /usr/local/bin
-        remote_src: yes
+        url: https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
+        dest: /tmp/terraform.zip
 
 ---
 
-vault policy write dev-policy -<<EOF
+vault auth enable userpass
+vault write auth/userpass/users/mayur password="strongpass" policies="dev"
+
+vault policy write dev -<<EOF
 path "secret/data/dev/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
+  capabilities = ["create", "read", "update", "delete"]
 }
 EOF
-
-vault write auth/userpass/users/mayur password="strongpassword" policies="dev-policy"
-
----
-
+    </div>
   </div>
 
+  <!-- Foreground Static Content -->
   <div class="container">
-    <h1>Mayur Gandhi</h1>
-    <h2>Cloud Architect | Terraform · Vault · Ansible · DevOps</h2>
-    <p>I build secure, automated infrastructure platforms for high-scale and regulated environments. This site is a window into my tools, code, and thoughts on infrastructure automation and security engineering.</p>
+    <h1>DevOpsMayur</h1>
+    <h2>Cloud Architect | AWS · Terraform · Ansible · Vault</h2>
+    <p>Building secure, automated infrastructure with zero fluff.</p>
 
     <ul>
       <li><a href="https://github.com/devopsmayur" target="_blank">GitHub Profile</a></li>
       <li><a href="https://devopsmayur.github.io/mgblogs/" target="_blank">Markdown Blogs</a></li>
       <li><a href="https://www.linkedin.com/in/devopsmayur" target="_blank">LinkedIn</a></li>
-      <li><a href="mailto:you@example.com">Email Me</a></li>
     </ul>
   </div>
 
