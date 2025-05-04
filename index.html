@@ -5,81 +5,75 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DevOpsMayur | Cloud Architect</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
     body {
       margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #f8f8f8;
+      font-family: system-ui, sans-serif;
+      background-color: #f7f7f7;
       color: #111;
     }
 
+    /* Animated background with code */
     .background {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      height: 100%;
-      z-index: 0;
-      white-space: pre-wrap;
-      font-family: 'Courier New', monospace;
-      color: rgba(0, 0, 0, 0.03);
-      line-height: 1.4;
-      padding: 2rem;
+      height: 200%;
+      font-family: monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      line-height: 1.6;
+      color: rgba(0, 0, 0, 0.035);
       pointer-events: none;
-      animation: scroll 60s linear infinite;
-      overflow: hidden;
+      animation: scroll 80s linear infinite;
+      z-index: 0;
+      padding: 2rem;
     }
 
     @keyframes scroll {
       0% { transform: translateY(0); }
-      100% { transform: translateY(-100%); }
+      100% { transform: translateY(-50%); }
     }
 
-    .content {
+    .container {
       position: relative;
       z-index: 1;
-      max-width: 650px;
-      margin: 8vh auto;
-      padding: 2rem;
+      max-width: 700px;
+      margin: 10vh auto;
       background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
     }
 
     h1 {
       font-size: 2.2rem;
-      margin-bottom: 0.3em;
+      margin-bottom: 0.2em;
     }
 
     h2 {
-      font-weight: normal;
-      color: #444;
-      font-size: 1.2rem;
-      margin-top: 0;
+      font-weight: 400;
+      font-size: 1.1rem;
+      color: #555;
     }
 
     p {
-      margin-top: 1.5rem;
+      margin-top: 1.2rem;
       line-height: 1.6;
-      font-size: 1rem;
     }
 
     ul {
       list-style: none;
-      padding: 0;
+      padding-left: 0;
       margin-top: 2rem;
     }
 
     li {
-      margin: 0.75rem 0;
+      margin: 0.6rem 0;
     }
 
     a {
-      color: #0366d6;
+      color: #007acc;
       text-decoration: none;
     }
 
@@ -92,41 +86,59 @@
 
   <div class="background">
 provider "aws" {
-  region = "us-west-2"
+  region = "us-east-1"
 }
 
-resource "aws_instance" "example" {
-  ami           = "ami-12345678"
-  instance_type = "t2.micro"
+resource "aws_s3_bucket" "static_site" {
+  bucket = "devopsmayur-site"
+  acl    = "public-read"
+}
+
+output "bucket_url" {
+  value = aws_s3_bucket.static_site.website_endpoint
 }
 
 ---
-- name: Install and configure nginx
-  hosts: web
+
+- name: Install Vault
+  hosts: all
   become: yes
   tasks:
-    - name: Install nginx
-      apt:
-        name: nginx
-        state: present
+    - name: Download Vault
+      get_url:
+        url: https://releases.hashicorp.com/vault/1.10.3/vault_1.10.3_linux_amd64.zip
+        dest: /tmp/vault.zip
 
-    - name: Start nginx
-      service:
-        name: nginx
-        state: started
-        enabled: true
+    - name: Unzip Vault
+      unarchive:
+        src: /tmp/vault.zip
+        dest: /usr/local/bin
+        remote_src: yes
+
+---
+
+vault policy write dev-policy -<<EOF
+path "secret/data/dev/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+EOF
+
+vault write auth/userpass/users/mayur password="strongpassword" policies="dev-policy"
+
+---
+
   </div>
 
-  <div class="content">
+  <div class="container">
     <h1>Mayur Gandhi</h1>
-    <h2>Cloud Architect · Terraform | Vault | Ansible | DevOps</h2>
-    <p>I design secure, automated infrastructure platforms for regulated industries. Passionate about Infrastructure as Code, policy-as-code, and secure provisioning with tools like Terraform, Vault, Ansible, Openshift.</p>
+    <h2>Cloud Architect | Terraform · Vault · Ansible · DevOps</h2>
+    <p>I build secure, automated infrastructure platforms for high-scale and regulated environments. This site is a window into my tools, code, and thoughts on infrastructure automation and security engineering.</p>
 
     <ul>
-      <li><a href="https://github.com/devopsmayur" target="_blank">GitHub</a></li>
-      <li><a href="https://devopsmayur.github.io/mgblogs/" target="_blank">My Blog (Markdown)</a></li>
+      <li><a href="https://github.com/devopsmayur" target="_blank">GitHub Profile</a></li>
+      <li><a href="https://devopsmayur.github.io/mgblogs/" target="_blank">Markdown Blogs</a></li>
       <li><a href="https://www.linkedin.com/in/devopsmayur" target="_blank">LinkedIn</a></li>
-      <li><a href="mailto:you@example.com">Email me</a></li>
+      <li><a href="mailto:you@example.com">Email Me</a></li>
     </ul>
   </div>
 
