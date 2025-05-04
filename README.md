@@ -1,2 +1,1 @@
-# mgblogs
-content Blogs
+Blogs by Mayur for the World 
