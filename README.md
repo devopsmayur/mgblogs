@@ -1,2 +1,2 @@
 # mgblogs
-content logs
+content Blogs
