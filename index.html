@@ -35,14 +35,14 @@
       font-size: 0.75rem;
       white-space: pre;
       line-height: 1.4;
-      color: rgba(15, 32, 48, 0.08);
-      animation: codeScroll 1s linear infinite;
+      color: rgba(15, 200, 100, 0.3); /* Increased opacity and changed color for better visibility */
+      animation: codeScroll 20s linear infinite; /* Increased duration for slower, continuous scrolling */
       padding: 2rem;
     }
 
     @keyframes codeScroll {
-      0% { transform: translateY(-100%); }
-      100% { transform: translateY(0); }
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-50%); } /* Changed direction for more natural scrolling */
     }
 
     .container {
@@ -51,7 +51,7 @@
       left: 50%;
       transform: translate(-50%, -50%);
       z-index: 1;
-      background-color: rgba(30, 30, 30, 0.95);
+      background-color: rgba(30, 30, 30, 0.85); /* Slightly more transparent to see background */
       padding: 2rem;
       border-radius: 10px;
       box-shadow: 0 0 15px rgba(13, 148, 80, 0.15);
@@ -114,6 +114,34 @@ resource "aws_instance" "app" {
   }
 }
 
+resource "aws_security_group" "allow_web" {
+  name        = "allow_web_traffic"
+  description = "Allow web inbound traffic"
+  
+  ingress {
+    description = "HTTPS"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  
+  ingress {
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 ---
 
 - name: Install Terraform
@@ -124,6 +152,17 @@ resource "aws_instance" "app" {
       get_url:
         url: https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
         dest: /tmp/terraform.zip
+        
+    - name: Install unzip
+      package:
+        name: unzip
+        state: present
+        
+    - name: Unzip Terraform
+      unarchive:
+        src: /tmp/terraform.zip
+        dest: /usr/local/bin
+        remote_src: yes
 
 ---
 
@@ -135,6 +174,28 @@ path "secret/data/dev/*" {
   capabilities = ["create", "read", "update", "delete"]
 }
 EOF
+
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            steps {
+                sh 'npm install'
+                sh 'npm test'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sh 'terraform init'
+                sh 'terraform apply -auto-approve'
+            }
+        }
+    }
+}
+
+kubectl create deployment nginx --image=nginx
+kubectl expose deployment nginx --port=80
+kubectl autoscale deployment nginx --cpu-percent=50 --min=1 --max=10
     </div>
   </div>
 
