@@ -1,54 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>DevOpsMayur | My Projects</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevOpsMayur | Architecture & DevOps Insights</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 2em;
-      background-color: #f4f4f4;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f8f9fa;
       color: #333;
     }
-    h1 {
-      color: #2c3e50;
+
+    header {
+      background-color: #24292e;
+      color: #fff;
+      padding: 1.5em 2em;
+      text-align: center;
     }
-    a {
-      color: #007acc;
-      text-decoration: none;
+
+    header h1 {
+      margin: 0;
+      font-size: 2em;
     }
-    a:hover {
-      text-decoration: underline;
+
+    header p {
+      margin: 0.5em 0 0;
+      font-size: 1.1em;
+      color: #d1d5da;
     }
-    ul {
-      padding-left: 1.5em;
+
+    main {
+      max-width: 800px;
+      margin: 2em auto;
+      padding: 0 1em;
     }
+
     .card {
       background: #fff;
-      padding: 1em;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      margin-bottom: 1em;
+      padding: 1.5em;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.5em;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      color: #0366d6;
+    }
+
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+
+    li {
+      margin: 0.75em 0;
+    }
+
+    a {
+      color: #0366d6;
+      font-weight: 500;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    a:hover {
+      color: #0056b3;
+      text-decoration: underline;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2em;
+      font-size: 0.9em;
+      color: #666;
+      border-top: 1px solid #ddd;
+      margin-top: 3em;
+    }
+
+    footer a {
+      color: #0366d6;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Welcome to DevOpsMayur</h1>
-    <p>Explore my Markdown-based blog posts and notes directly from GitHub.</p>
-  </div>
 
-  <div class="card">
-    <h2>📚 Blog and Project Links</h2>
-    <ul>
-      <li><a href="https://github.com/devopsmayur/mgblogs/blob/main/architectureblogs/apibanking.md" target="_blank">API Banking</a></li>
-      <li><a href="https://github.com/devopsmayur/mgblogs/blob/main/architectureblogs/day0automation.md" target="_blank">Day 0 Automation</a></li>
-      <li><a href="https://github.com/devopsmayur/mgblogs/blob/main/architectureblogs/day1automation.md" target="_blank">Day 1 Automation</a></li>
-    </ul>
-  </div>
+  <header>
+    <h1>DevOpsMayur</h1>
+    <p>Cloud • Architecture • Automation</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>🚀 Featured Architecture Blogs</h2>
+      <ul>
+        <li><a href="https://github.com/devopsmayur/mgblogs/blob/main/architectureblogs/apibanking.md" target="_blank">API Banking Architecture</a></li>
+        <li><a href="https://github.com/devopsmayur/mgblogs/blob/main/architectureblogs/day0automation.md" target="_blank">Day 0 Automation Strategy</a></li>
+        <li><a href="https://github.com/devopsmayur/mgblogs/blob/main/architectureblogs/day1automation.md" target="_blank">Day 1 Infra Provisioning</a></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>📂 GitHub Profile</h2>
+      <p>Explore more projects, scripts, and notes on my <a href="https://github.com/devopsmayur" target="_blank">GitHub profile</a>.</p>
+    </div>
+  </main>
 
   <footer>
-    <p>© 2025 DevOpsMayur • <a href="https://github.com/devopsmayur" target="_blank">GitHub</a></p>
+    © 2025 DevOpsMayur • Built with 💻 and ☕ • <a href="https://github.com/devopsmayur" target="_blank">GitHub</a>
   </footer>
+
 </body>
 </html>
