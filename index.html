@@ -48,7 +48,7 @@
     .container {
       position: fixed;
       top: 50%;
-      left: 40%;
+      left: 50%;
       transform: translate(-50%, -50%);
       z-index: 1;
       background-color: rgba(30, 30, 30, 0.85);
@@ -56,8 +56,8 @@
       border-radius: 10px;
       box-shadow: 0 0 15px rgba(13, 148, 80, 0.15);
       text-align: center;
-      max-width: 600px;
-      width: 60%;
+      max-width: 700px;
+      width: 90%;
     }
 
     h1 {
@@ -99,31 +99,29 @@
     /* New styles for the tabs */
     .tabs-container {
       position: fixed;
-      top: 50%;
-      right: 5%;
-      transform: translateY(-50%);
+      top: 20px;
+      right: 20px;
       z-index: 2;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       gap: 15px;
     }
 
     .tab {
       background-color: rgba(30, 30, 30, 0.9);
-      padding: 15px 25px;
+      padding: 10px 15px;
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(13, 148, 80, 0.2);
       transition: all 0.3s ease;
       cursor: pointer;
-      border-left: 3px solid #00ff9f;
+      border-bottom: 3px solid #00ff9f;
       text-align: center;
-      width: 150px;
     }
 
     .tab:hover {
       background-color: rgba(40, 40, 40, 0.95);
       box-shadow: 0 0 15px rgba(13, 148, 80, 0.4);
-      transform: translateX(-5px);
+      transform: translateY(3px);
     }
 
     .tab a {
@@ -257,7 +255,6 @@ vault write database/config/mysql \
 
     <ul>
       <li><a href="https://github.com/devopsmayur" target="_blank">GitHub Profile</a></li>
-      <li><a href="https://devopsmayur.github.io/mgblogs/" target="_blank">Markdown Blogs</a></li>
       <li><a href="https://www.linkedin.com/in/devopsmayur" target="_blank">LinkedIn</a></li>
       <li><a href="https://github.com/devopsmayur/mgblogs/blob/main/resume/Mayur_G_Resume.pdf" target="_blank">Resume</a></li>
     </ul>
