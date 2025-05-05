@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DevOpsMayur | Architecture</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: 'Courier New', monospace;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+    }
+
+    .background-box {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .code-scroll {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      height: 200%;
+      font-size: 0.75rem;
+      white-space: pre;
+      line-height: 1.4;
+      color: rgba(15, 200, 100, 0.3);
+      animation: codeScroll 30s linear infinite;
+      padding: 2rem;
+    }
+
+    @keyframes codeScroll {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-50%); }
+    }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: rgba(20, 20, 20, 0.9);
+      padding: 1rem 0;
+      text-align: center;
+      z-index: 2;
+      box-shadow: 0 2px 10px rgba(0, 255, 159, 0.2);
+    }
+
+    .header h1 {
+      margin: 0;
+      color: #00ff9f;
+      font-size: 1.8rem;
+    }
+
+    .nav-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    .nav-tab {
+      padding: 8px 15px;
+      border-radius: 5px;
+      text-decoration: none;
+      color: #e0e0e0;
+      transition: all 0.3s ease;
+    }
+
+    .nav-tab:hover {
+      background-color: rgba(0, 255, 159, 0.2);
+    }
+
+    .nav-tab.active {
+      background-color: rgba(0, 255, 159, 0.3);
+      color: #ffffff;
+      font-weight: bold;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 800px;
+      margin: 120px auto 40px;
+      padding: 2rem;
+      background-color: rgba(30, 30, 30, 0.85);
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(13, 148, 80, 0.15);
+    }
+
+    h2 {
+      color: #00ff9f;
+      border-bottom: 1px solid rgba(0, 255, 159, 0.3);
+      padding-bottom: 10px;
+    }
+
+    p {
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .highlight {
+      color: #00ff9f;
+      font-weight: bold;
+    }
+
+    .home-button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: rgba(0, 255, 159, 0.2);
+      color: #00ff9f;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+    }
+
+    .home-button:hover {
+      background-color: rgba(0, 255, 159, 0.4);
+    }
+
+    .architecture-diagram {
+      margin: 30px 0;
+      padding: 20px;
+      background-color: rgba(40, 40, 40, 0.7);
+      border-radius: 8px;
+      border: 1px solid rgba(0, 255, 159, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background DevOps Code -->
+  <div class="background-box">
+    <div class="code-scroll">
+# Terraform AWS Multi-Account Architecture
+
+module "organization" {
+  source  = "terraform-aws-modules/organization/aws"
+  version = "~> 1.0"
+  
+  aws_service_access_principals = [
+    "cloudtrail.amazonaws.com",
+    "config.amazonaws.com",
+  ]
+  
+  feature_set = "ALL"
+  
+  organizational_units = {
+    security = {
+      name = "Security"
+    }
+    workloads = {
+      name = "Workloads"
+    }
+    shared-services = {
+      name = "Shared-Services"
+    }
+  }
+}
+
+# Network Topology
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 3.0"
+  
+  name = "production-vpc"
+  cidr = "10.0.0.0/16"
+  
+  azs             = ["us-east-1a", "us-east-1b", "us-east-1c"]
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+  
+  enable_nat_gateway = true
+  single_nat_gateway = false
+  one_nat_gateway_per_az = true
+  
+  enable_vpn_gateway = true
+  
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+  
+  tags = {
+    Environment = "production"
+    Terraform   = "true"
+  }
+}
+
+# Service Mesh Configuration
+resource "aws_appmesh_mesh" "main" {
+  name = "app-mesh"
+  
+  spec {
+    egress_filter {
+      type = "ALLOW_ALL"
+    }
+  }
+}
+
+resource "aws_appmesh_virtual_node" "service" {
+  name      = "service-a"
+  mesh_name = aws_appmesh_mesh.main.id
+  
+  spec {
+    listener {
+      port_mapping {
+        port     = 8080
+        protocol = "http"
+      }
+      health_check {
+        protocol            = "http"
+        path                = "/health"
+        healthy_threshold   = 2
+        unhealthy_threshold = 2
+        timeout_millis      = 2000
+        interval_millis     = 5000
+      }
+    }
+    
+    service_discovery {
+      aws_cloud_map {
+        namespace_name = "example.local"
+        service_name   = "serviceA"
+      }
+    }
+  }
+}
+
+# Zero Trust Security Model
+resource "aws_iam_role" "service_role" {
+  name = "service-role"
+  
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        },
+        Effect = "Allow",
+        Sid    = ""
+      }
+    ]
+  })
+  
+  inline_policy {
+    name = "least-privilege"
+    policy = jsonencode({
+      Version = "2012-10-17",
+      Statement = [
+        {
+          Action   = [
+            "dynamodb:GetItem",
+            "dynamodb:Query",
+            "dynamodb:PutItem"
+          ],
+          Effect   = "Allow",
+          Resource = "arn:aws:dynamodb:*:*:table/ServiceATable"
+        }
+      ]
+    })
+  }
+}
+    </div>
+  </div>
+
+  <!-- Header with Navigation -->
+  <div class="header">
+    <h1>DevOpsMayur</h1>
+    <div class="nav-tabs">
+      <a href="index.html" class="nav-tab">Home</a>
+      <a href="strategy.html" class="nav-tab">Strategy</a>
+      <a href="architecture.html" class="nav-tab active">Architecture</a>
+      <a href="innovation.html" class="nav-tab">Innovation</a>
+      <a href="engineering.html" class="nav-tab">Engineering</a>
+    </div>
+  </div>
+
+  <!-- Content Container -->
+  <div class="container">
+    <h2>Cloud Architecture Patterns</h2>
+    
+    <p>As a <span class="highlight">Cloud Architect</span>, I design and implement secure, scalable, and compliant cloud infrastructures. My architectural approach focuses on creating reusable patterns that balance operational efficiency, security, and cost optimization.</p>
+    
+    <div class="architecture-diagram">
+      <pre>
+┌───────────────────┐     ┌────────────────────┐     ┌───────────────────┐
+│                   │     │                    │     │                   │
+│  Security Account │     │  Shared Services   │     │ Application       │
+│                   │     │                    │     │ Workload Account  │
+│  - GuardDuty      │     │  - CI/CD Pipeline  │     │                   │
+│  - Security Hub   │     │  - Artifact Repo   │     │  - VPC            │
+│  - IAM            │     │  - Monitoring      │     │  - EKS/ECS        │
+│  - WAF            │     │  - Service Mesh    │     │  - App Services   │
+│                   │     │                    │     │                   │
+└───────────────────┘     └────────────────────┘     └───────────────────┘
+           │                        │                          │
+           └────────────────────────┼──────────────────────────┘
+                                    │
+                          ┌─────────────────────┐
+                          │                     │
+                          │    Transit Gateway  │
+                          │                     │
+                          └─────────────────────┘
+                                    │
+                          ┌─────────────────────┐
+                          │                     │
+                          │   On-Prem Network   │
+                          │                     │
+                          └─────────────────────┘
+      </pre>
+    </div>
+    
+    <p>My architectural specializations include:</p>
+    
+    <ul>
+      <li><strong>Multi-Account Strategies:</strong> Implementing secure AWS Organizations structures with appropriate account segregation</li>
+      <li><strong>Zero Trust Security:</strong> Designing architectures with least privilege, just-in-time access, and comprehensive monitoring</li>
+      <li><strong>Service Mesh Implementations:</strong> Creating resilient microservice architectures with advanced traffic management</li>
+      <li><strong>Hybrid Cloud Connectivity:</strong> Establishing secure, high-performance connections between cloud and on-premises environments</li>
+      <li><strong>Infrastructure as Code:</strong> Developing reusable Terraform modules for consistent deployment</li>
+    </ul>
+    
+    <h2>Reference Architectures</h2>
+    
+    <p>This page will showcase detailed reference architectures for various use cases, including:</p>
+    
+    <ul>
+      <li>Highly-Available Multi-Region Deployments</li>
+      <li>Secure Regulated Financial Services Infrastructure</li>
+      <li>CI/CD Pipeline Architecture with Security Controls</li>
+      <li>Data Mesh Implementations</li>
+      <li>Serverless Event-Driven Architecture</li>
+    </ul>
+    
+    <h2>Architecture Decision Records</h2>
+    
+    <p>This section will contain sample Architecture Decision Records (ADRs) demonstrating my approach to architectural decision-making and documentation.</p>
+    
+    <a href="index.html" class="home-button">Return to Home</a>
+  </div>
+
+</body>
+</html>
