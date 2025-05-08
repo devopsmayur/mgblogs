@@ -135,7 +135,87 @@
   <!-- Background DevOps Code -->
   <div class="background-box">
     <div class="code-scroll">
-<article>
+# Strategic Planning for Cloud Transformation
+- Assess current infrastructure and applications
+- Define business objectives and key results
+- Identify migration patterns and strategies
+- Create phased implementation roadmap
+- Calculate total cost of ownership (TCO)
+- Establish governance frameworks
+- Define metrics for success
+
+# Risk Assessment Matrix
+| Risk                          | Impact | Probability | Mitigation                        |
+|-------------------------------|--------|------------|-----------------------------------|
+| Vendor lock-in                | High   | Medium     | Multi-cloud architecture          |
+| Skill gaps                    | Medium | High       | Training and managed services     |
+| Security vulnerabilities      | High   | Medium     | DevSecOps implementation          |
+| Cost overruns                 | Medium | Medium     | FinOps practices                  |
+| Performance degradation       | High   | Low        | Proper architecture design        |
+| Compliance issues             | High   | Medium     | Regulatory-first approach         |
+
+# FinOps Strategy
+resource "aws_budgets_budget" "cost_budget" {
+  name         = "monthly-budget"
+  budget_type  = "COST"
+  limit_amount = "5000"
+  limit_unit   = "USD"
+  time_unit    = "MONTHLY"
+
+  notification {
+    comparison_operator = "GREATER_THAN"
+    threshold           = 80
+    threshold_type      = "PERCENTAGE"
+    notification_type   = "ACTUAL"
+    subscriber_email_addresses = ["alerts@company.com"]
+  }
+}
+
+# Enterprise Architecture Integration
+@startuml
+!theme minty
+title Cloud Strategy Integration
+
+package "On-Premises" {
+  [Legacy Systems]
+  [Data Center]
+}
+
+cloud "Cloud Environment" {
+  [IaaS Resources]
+  [PaaS Services]
+  [SaaS Applications]
+}
+
+package "Integration Layer" {
+  [API Gateway]
+  [Event Bus]
+  [Identity Federation]
+}
+
+[Legacy Systems] --> [API Gateway]
+[API Gateway] --> [PaaS Services]
+[Event Bus] <--> [IaaS Resources]
+[Identity Federation] --> [SaaS Applications]
+@enduml
+    </div>
+  </div>
+
+  <!-- Header with Navigation -->
+  <div class="header">
+    <h1>DevOpsMayur</h1>
+    <div class="nav-tabs">
+      <a href="index.html" class="nav-tab">Home</a>
+      <a href="strategy.html" class="nav-tab active">Strategy</a>
+      <a href="architecture.html" class="nav-tab">Architecture</a>
+      <a href="innovation.html" class="nav-tab">Innovation</a>
+      <a href="engineering.html" class="nav-tab">Engineering</a>
+    </div>
+  </div>
+
+  <!-- Content Container -->
+  <div class="container">
+    <article>
   <h1>Building India’s BFSI Tech Backbone: Lessons in Leading from the Front</h1>
   <p>India’s financial sector is going through a generational transformation—and I’ve had the privilege to lead many of its foundational tech shifts, from API banking to secure AI platforms. But transformation isn’t just about tools; it’s about vision, partnerships, and timing.</p>
 
@@ -165,24 +245,7 @@
 
   <blockquote>Strategy isn't a PowerPoint deck—it's driving measurable, operational change with trust.</blockquote>
 </article>
-
-    </div>
-  </div>
-
-  <!-- Header with Navigation -->
-  <div class="header">
-    <h1>DevOpsMayur</h1>
-    <div class="nav-tabs">
-      <a href="index.html" class="nav-tab">Home</a>
-      <a href="strategy.html" class="nav-tab active">Strategy</a>
-      <a href="architecture.html" class="nav-tab">Architecture</a>
-      <a href="innovation.html" class="nav-tab">Innovation</a>
-      <a href="engineering.html" class="nav-tab">Engineering</a>
-    </div>
-  </div>
-
-  <!-- Content Container -->
- 
+    
     <a href="index.html" class="home-button">Return to Home</a>
   </div>
 
