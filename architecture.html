@@ -289,64 +289,28 @@ resource "aws_iam_role" "service_role" {
 
   <!-- Content Container -->
   <div class="container">
-    <h2>Cloud Architecture Patterns</h2>
-    
-    <p>As a <span class="highlight">Cloud Architect</span>, I design and implement secure, scalable, and compliant cloud infrastructures. My architectural approach focuses on creating reusable patterns that balance operational efficiency, security, and cost optimization.</p>
-    
-    <div class="architecture-diagram">
-      <pre>
-┌───────────────────┐     ┌────────────────────┐     ┌───────────────────┐
-│                   │     │                    │     │                   │
-│  Security Account │     │  Shared Services   │     │ Application       │
-│                   │     │                    │     │ Workload Account  │
-│  - GuardDuty      │     │  - CI/CD Pipeline  │     │                   │
-│  - Security Hub   │     │  - Artifact Repo   │     │  - VPC            │
-│  - IAM            │     │  - Monitoring      │     │  - EKS/ECS        │
-│  - WAF            │     │  - Service Mesh    │     │  - App Services   │
-│                   │     │                    │     │                   │
-└───────────────────┘     └────────────────────┘     └───────────────────┘
-           │                        │                          │
-           └────────────────────────┼──────────────────────────┘
-                                    │
-                          ┌─────────────────────┐
-                          │                     │
-                          │    Transit Gateway  │
-                          │                     │
-                          └─────────────────────┘
-                                    │
-                          ┌─────────────────────┐
-                          │                     │
-                          │   On-Prem Network   │
-                          │                     │
-                          └─────────────────────┘
-      </pre>
-    </div>
-    
-    <p>My architectural specializations include:</p>
-    
-    <ul>
-      <li><strong>Multi-Account Strategies:</strong> Implementing secure AWS Organizations structures with appropriate account segregation</li>
-      <li><strong>Zero Trust Security:</strong> Designing architectures with least privilege, just-in-time access, and comprehensive monitoring</li>
-      <li><strong>Service Mesh Implementations:</strong> Creating resilient microservice architectures with advanced traffic management</li>
-      <li><strong>Hybrid Cloud Connectivity:</strong> Establishing secure, high-performance connections between cloud and on-premises environments</li>
-      <li><strong>Infrastructure as Code:</strong> Developing reusable Terraform modules for consistent deployment</li>
-    </ul>
-    
-    <h2>Reference Architectures</h2>
-    
-    <p>This page will showcase detailed reference architectures for various use cases, including:</p>
-    
-    <ul>
-      <li>Highly-Available Multi-Region Deployments</li>
-      <li>Secure Regulated Financial Services Infrastructure</li>
-      <li>CI/CD Pipeline Architecture with Security Controls</li>
-      <li>Data Mesh Implementations</li>
-      <li>Serverless Event-Driven Architecture</li>
-    </ul>
-    
-    <h2>Architecture Decision Records</h2>
-    
-    <p>This section will contain sample Architecture Decision Records (ADRs) demonstrating my approach to architectural decision-making and documentation.</p>
+   <article>
+  <h1>From Static Infrastructure to Self-Service Cloud: My Journey with Multi-Cloud Blueprints</h1>
+  <p>Infrastructure architecture today must balance reliability with elasticity—and compliance with speed. Over two decades, I’ve architected systems from secure AI platforms to real-time trading.</p>
+
+  <h2>Multi-Cloud Design with Terraform</h2>
+  <p>Designing reusable, GitOps-driven blueprints for BFSI enterprises has accelerated adoption with policy-as-code baked in.</p>
+
+  <h2>Secure AI Infrastructure</h2>
+  <p>Using Vault to manage token-level access to Bedrock, Vertex AI, and Pinecone—and encrypting LLM data pipelines end-to-end.</p>
+
+  <h2>RBI and Deutsche Bank Case Studies</h2>
+  <ul>
+    <li>On-prem infra for high-frequency trading</li>
+    <li>Cloud-native AIOps platforms with observability baked in</li>
+  </ul>
+
+  <h2>High-Availability Systems</h2>
+  <p>Milliseconds matter in trading. I built infrastructure that sustained performance and uptime without compromise.</p>
+
+  <blockquote>Great architecture isn’t visible—it’s felt in resilience, speed, and trust.</blockquote>
+</article>
+
     
     <a href="index.html" class="home-button">Return to Home</a>
   </div>
