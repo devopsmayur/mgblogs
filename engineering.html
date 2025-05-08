@@ -339,104 +339,31 @@ module "vault_cluster" {
 
   <!-- Content Container -->
   <div class="container">
-    <h2>Engineering Excellence</h2>
-    
-    <p>As a <span class="highlight">Staff Engineer at HashiCorp</span>, I build production-grade infrastructure automation tools and frameworks with a focus on security, reliability, and developer experience. This page showcases my engineering projects and technical contributions.</p>
-    
-    <div class="project-section">
-      <div class="project-title">
-        <h3>Terraform Vault Provider Extensions</h3>
-        <a href="https://github.com/devopsmayur/terraform-provider-vault-extensions" target="_blank" class="github-link">GitHub Repository</a>
-      </div>
-      
-      <div class="tech-stack">
-        <span class="tech-badge">Go</span>
-        <span class="tech-badge">Terraform</span>
-        <span class="tech-badge">HashiCorp Vault</span>
-        <span class="tech-badge">AWS</span>
-      </div>
-      
-      <p>Extended Terraform provider for HashiCorp Vault with additional resources and data sources for financial services compliance and advanced secret rotation workflows.</p>
-      
-      <div class="code-block">
-resource "vault_pki_secret_backend_role" "role" {
-  backend            = vault_mount.pki.path
-  name               = "financial-api"
-  ttl                = 3600
-  max_ttl           = 86400
-  allow_ip_sans     = true
-  key_type          = "rsa"
-  key_bits          = 4096
-  allowed_domains   = ["api.fintech.internal"]
-  allow_subdomains  = true
-  
-  key_usage = [
-    "DigitalSignature",
-    "KeyAgreement",
-    "KeyEncipherment",
-  ]
+  <article>
+  <h1>Terraform, Vault, and the Engineering of Trust in BFSI Cloud</h1>
+  <p>Engineering in regulated industries isn’t just about building—it’s about securing, validating, and scaling. Here’s what I’ve learned building AI-ready and finance-grade platforms.</p>
 
-  policy_identifiers = [
-    "1.3.6.1.4.1.44947.1.2.3",
-  ]
+  <h2>Terraform, Packer, and Vault in Action</h2>
+  <ul>
+    <li>CI/CD-integrated pipelines with Vault-sealed secrets</li>
+    <li>Automated role-based tagging and access policies</li>
+  </ul>
+
+  <h2>Secure AI Environments</h2>
+  <p>Managed secret access to Bedrock, Pinecone, Vertex AI. Applied encryption patterns to API-layer and inference security.</p>
+
+  <h2>From Ansible to Nomad</h2>
+  <p>Used Nomad to orchestrate microservices and GPU-based AI workloads while keeping IaC principles intact.</p>
+
+  <h2>Mentoring the Next Generation</h2>
+  <p>Designed and delivered workshops to BFSI engineers, helping them translate theory into cloud-native practice.</p>
+
+  <blockquote>If it’s not secure, it’s not done. Engineering is trust made tangible.</blockquote>
+</article>
   
-  # Custom financial compliance extensions
-  regulatory_compliance {
-    frameworks = ["PCI-DSS", "SOX"]
-    require_approval = true
-    approval_quorum = 2
-  }
-}
-      </div>
-    </div>
-    
-    <div class="project-section">
-      <div class="project-title">
-        <h3>GitOps Platform for Infrastructure</h3>
-        <a href="https://github.com/devopsmayur/gitops-platform" target="_blank" class="github-link">GitHub Repository</a>
-      </div>
+  
       
-      <div class="tech-stack">
-        <span class="tech-badge">Flux</span>
-        <span class="tech-badge">ArgoCD</span>
-        <span class="tech-badge">Kubernetes</span>
-        <span class="tech-badge">Terraform</span>
-      </div>
-      
-      <p>A comprehensive GitOps platform for managing infrastructure as code with advanced approval workflows, security scanning, and automated drift detection/remediation.</p>
-    </div>
-    
-    <div class="project-section">
-      <div class="project-title">
-        <h3>Multi-Cloud Secret Management Framework</h3>
-        <a href="https://github.com/devopsmayur/secret-manager" target="_blank" class="github-link">GitHub Repository</a>
-      </div>
-      
-      <div class="tech-stack">
-        <span class="tech-badge">HashiCorp Vault</span>
-        <span class="tech-badge">AWS KMS</span>
-        <span class="tech-badge">GCP Secret Manager</span>
-        <span class="tech-badge">Azure Key Vault</span>
-      </div>
-      
-      <p>A unified framework for managing secrets across multiple cloud providers with centralized policy enforcement, automated rotation, and compliance reporting.</p>
-    </div>
-    
-    <h2>Open Source Contributions</h2>
-    
-    <p>Active contributor to several open source projects:</p>
-    
-    <ul>
-      <li><strong>HashiCorp Terraform:</strong> Module improvements and bug fixes</li>
-      <li><strong>HashiCorp Vault:</strong> Auth method plugins and documentation</li>
-      <li><strong>Kubernetes SIG-Security:</strong> Security policy automation</li>
-      <li><strong>Cloud Native Computing Foundation (CNCF):</strong> Security and compliance working groups</li>
-    </ul>
-    
-    <h2>Technical Blog Posts</h2>
-    
-    <p>I regularly write about cloud engineering, DevOps practices, and security. Check out my <a href="https://devopsmayur.github.io/mgblogs/" target="_blank">technical blog</a> for detailed articles and tutorials.</p>
-    
+     
     <a href="index.html" class="home-button">Return to Home</a>
   </div>
 
