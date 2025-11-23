@@ -309,145 +309,371 @@
   <!-- Background Code - Split Screen -->
   <div class="background-box">
     <pre class="code-scroll left">
-// TypeScript with Anthropic SDK
+// Refactored Anthropic code reviewer (TypeScript)
+// Single-file example with modular functions, stronger types, retries, and a tool-calling loop.
+
 import Anthropic from "@anthropic-ai/sdk";
 
-const apiKey = process.env.ANTHROPIC_API_KEY;
-if (!apiKey) {
-  throw new Error("ANTHROPIC_API_KEY is not set");
+/**
+ * ===== Configuration =====
+ */
+const MODEL = process.env.ANTHROPIC_MODEL_ID ?? "claude-sonnet-4-20250514";
+const API_KEY = process.env.ANTHROPIC_API_KEY;
+
+/**
+ * ===== Types =====
+ */
+export type TextBlock = { type: "text"; text: string };
+export type ToolUseBlock = {
+  type: "tool_use";
+  id: string;
+  name: string;
+  input: unknown;
+};
+export type ContentBlock = TextBlock | ToolUseBlock;
+
+export interface Message {
+  role: "user" | "assistant";
+  content: string | ContentBlock[];
 }
 
-const client = new Anthropic({ apiKey });
+/**
+ * ===== Guardrails =====
+ */
+function ensureEnv() {
+  if (!API_KEY) throw new Error("ANTHROPIC_API_KEY is not set");
+}
 
-// Narrow type for text blocks to avoid SDK-internal imports
-type TextBlock = { type: "text"; text: string };
+/**
+ * ===== Client factory =====
+ */
+function getClient() {
+  ensureEnv();
+  return new Anthropic({ apiKey: API_KEY });
+}
 
-const MODEL = "claude-3-5-sonnet-2024-10-22"; // <-- replace with the actual model id you use
+/**
+ * ===== Helpers =====
+ */
+function extractText(content: ContentBlock[]): string {
+  return content
+    .filter((b): b is TextBlock => b && b.type === "text")
+    .map((b) => b.text)
+    .join("");
+}
+
+function buildUserMessage(content: string): Message {
+  return { role: "user", content };
+}
+
+/**
+ * Basic retry with exponential backoff for transient errors
+ */
+async function withRetries<T>(fn: () => Promise<T>, attempts = 3, baseMs = 500): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (i === attempts - 1) break;
+      const delay = baseMs * Math.pow(2, i);
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw lastErr;
+}
+
+/**
+ * ===== Core request wrappers =====
+ */
+export async function sendMessage(
+  messages: Message[], 
+  maxTokens = 1024,
+  systemPrompt?: string
+) {
+  const client = getClient();
+  return withRetries(() =>
+    client.messages.create({
+      model: MODEL,
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages: messages as any,
+    })
+  );
+}
 
 export async function analyzeCode(code: string): Promise<string> {
-  const message = await client.messages.create({
-    model: MODEL,
-    max_tokens: 1024,
-    messages: [
-      { role: "user", content: `Analyze this code for security:\n\n${code}` },
-    ],
-  });
-
-  // concatenate any text blocks
-  const text = message.content
-    .filter((b): b is TextBlock => b.type === "text")
-    .map(b => b.text)
-    .join("");
-
-  return text;
+  const res = await sendMessage([
+    buildUserMessage(`Analyze this code for security, correctness, and performance.\n\n${code}`),
+  ]);
+  return extractText(res.content as ContentBlock[]);
 }
 
-// Stream responses (prints text as it arrives)
-export async function streamCompletion(prompt: string) {
+/**
+ * Streaming printer — writes text deltas to stdout
+ */
+export async function streamCompletion(prompt: string, maxTokens = 1024) {
+  const client = getClient();
   const stream = await client.messages.stream({
     model: MODEL,
-    max_tokens: 1024,
-    messages: [{ role: "user", content: prompt }],
+    max_tokens: maxTokens,
+    messages: [buildUserMessage(prompt)],
   });
 
-  for await (const event of stream) {
-    if (event.type === "content_block_delta" &&
-        event.delta?.type === "text_delta") {
-      process.stdout.write(event.delta.text);
+  for await (const evt of stream) {
+    if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
+      process.stdout.write(evt.delta.text);
     }
   }
 }
 
-// Conversation handler
+/**
+ * ===== Conversation manager =====
+ */
 export class ConversationManager {
-  private history: Array<{ role: "user" | "assistant" | "system"; content: string }> = [];
+  private history: Message[] = [];
+  private systemPrompt?: string;
 
-  async chat(userMessage: string): Promise<string> {
+  setSystem(content: string) {
+    this.systemPrompt = content;
+  }
+
+  async chat(userMessage: string, maxTokens = 2048): Promise<string> {
     this.history.push({ role: "user", content: userMessage });
 
-    const response = await client.messages.create({
-      model: MODEL,
-      max_tokens: 2048,
-      messages: this.history,
-    });
-
-    const assistantText = response.content
-      .filter((b): b is TextBlock => b.type === "text")
-      .map(b => b.text)
-      .join("");
+    const res = await sendMessage(this.history, maxTokens, this.systemPrompt);
+    const assistantText = extractText(res.content as ContentBlock[]);
 
     this.history.push({ role: "assistant", content: assistantText });
     return assistantText;
   }
+
+  getHistory() {
+    return [...this.history];
+  }
+
+  clearHistory() {
+    this.history = [];
+  }
 }
 
-// Tool definition (OK)
-const codeReviewTool = {
+/**
+ * ===== Tooling: Define a "review_code" tool and handle calls =====
+ */
+export const codeReviewTool = {
   name: "review_code",
-  description: "Reviews code for best practices",
+  description: "Reviews code for security, correctness, performance, and style.",
   input_schema: {
     type: "object",
     properties: {
       language: { type: "string" },
       code: { type: "string" },
+      goals: { type: "string", description: "Specific review goals or concerns" },
     },
     required: ["language", "code"],
   },
 };
 
-// Tool calling loop (minimal working example)
-export async function reviewWithTools(code: string, lang: string) {
-  // First request with tools
-  let response = await client.messages.create({
-    model: MODEL,
-    max_tokens: 2048,
-    tools: [codeReviewTool],
-    messages: [
-      { role: "user", content: `Review ${lang} code:\n\n${code}` },
-    ],
-  });
+// Minimal local implementation — replace with your real logic
+function runLocalCodeReview(input: { language: string; code: string; goals?: string }) {
+  const issues: string[] = [];
+  
+  if (!input.code.trim()) {
+    issues.push("No code provided.");
+  }
+  
+  if (/eval\s*\(/.test(input.code)) {
+    issues.push("Avoid using eval() - it's a security risk.");
+  }
+  
+  if (/any\b/.test(input.code) && input.language.toLowerCase().includes("ts")) {
+    issues.push("Prefer precise types over 'any' in TypeScript.");
+  }
 
-  // If the model called a tool, run it and send back the result
-  const toolCalls = response.content.filter(c => c.type === "tool_use");
-  if (toolCalls.length > 0) {
-    // Example: run the first tool call locally (you'd implement real logic)
-    const toolUse = toolCalls[0] as any;
-    const result = fakeReviewRunner(toolUse.input); // implement your own
+  if (!/['"`]use strict['"`]/.test(input.code) && input.language.toLowerCase() === "javascript") {
+    issues.push("Consider adding 'use strict' at the top of JavaScript files.");
+  }
 
-    // Send tool result back to the model
-    response = await client.messages.create({
+  return {
+    ok: issues.length === 0,
+    issues,
+    summary: issues.length 
+      ? "Potential issues detected." 
+      : "No obvious issues found (manual review still recommended).",
+  };
+}
+
+/**
+ * Tool call handler with proper message format
+ */
+export async function reviewWithTools(
+  code: string, 
+  lang: string, 
+  goals?: string
+): Promise<string> {
+  const client = getClient();
+  
+  const initialMessage = buildUserMessage(
+    `Review ${lang} code with goals: ${goals ?? "(none)"}.\n\n${code}`
+  );
+
+  // 1) Initial ask with tool availability
+  let response = await withRetries(() =>
+    client.messages.create({
       model: MODEL,
       max_tokens: 2048,
       tools: [codeReviewTool],
-      messages: [
-        { role: "user", content: `Review ${lang} code:\n\n${code}` },
-        { role: "tool", name: toolUse.name, tool_use_id: toolUse.id, content: JSON.stringify(result) },
-      ],
-    });
-  }
-
-  const text = response.content
-    .filter((b: any): b is TextBlock => b.type === "text")
-    .map(b => b.text)
-    .join("");
-
-  return text;
-}
-
-// Stub: replace with real code review logic
-function fakeReviewRunner(input: { language: string; code: string }) {
-  return { ok: true, notes: [`Reviewed ${input.language} code (${input.code.length} chars).`] };
-}
-
-// Batch processing
-export async function batchReview(files: Array<{ name: string; content: string }>) {
-  const reviews = await Promise.all(
-    files.map(async (file) => {
-      const result = await analyzeCode(file.content);
-      return { file: file.name, review: result };
+      messages: [initialMessage],
     })
   );
-  return reviews;
+
+  // 2) Check for tool calls
+  const content = response.content as ContentBlock[];
+  const toolCalls = content.filter((b): b is ToolUseBlock => b.type === "tool_use");
+  
+  if (toolCalls.length > 0) {
+    // Handle the first tool call
+    const call = toolCalls[0];
+    const result = runLocalCodeReview(call.input as any);
+
+    // 3) Send tool_result back with proper format
+    const messages: Message[] = [
+      initialMessage,
+      {
+        role: "assistant",
+        content: content, // Include the original assistant response with tool_use
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "tool_result",
+            tool_use_id: call.id,
+            content: JSON.stringify(result, null, 2),
+          },
+        ] as any,
+      },
+    ];
+
+    response = await withRetries(() =>
+      client.messages.create({
+        model: MODEL,
+        max_tokens: 2048,
+        tools: [codeReviewTool],
+        messages: messages as any,
+      })
+    );
+  }
+
+  return extractText(response.content as ContentBlock[]);
+}
+
+/**
+ * ===== Batch processing =====
+ */
+export async function batchReview(files: Array<{ name: string; content: string }>) {
+  return Promise.all(
+    files.map(async (file) => {
+      try {
+        const result = await analyzeCode(file.content);
+        return { 
+          file: file.name, 
+          review: result,
+          success: true 
+        };
+      } catch (error) {
+        return {
+          file: file.name,
+          review: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          success: false,
+        };
+      }
+    })
+  );
+}
+
+/**
+ * ===== Vision API support =====
+ */
+export async function analyzeImage(
+  imageData: string, 
+  mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+  prompt: string
+): Promise<string> {
+  const client = getClient();
+  
+  const response = await withRetries(() =>
+    client.messages.create({
+      model: MODEL,
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: mediaType,
+                data: imageData,
+              },
+            },
+            {
+              type: "text",
+              text: prompt,
+            },
+          ],
+        } as any,
+      ],
+    })
+  );
+
+  return extractText(response.content as ContentBlock[]);
+}
+
+/**
+ * ===== Example usage =====
+ */
+export async function main() {
+  try {
+    // Example 1: Simple code analysis
+    console.log("=== Example 1: Analyze Code ===");
+    const simpleCode = `
+      function add(a, b) {
+        return a + b;
+      }
+    `;
+    const analysis = await analyzeCode(simpleCode);
+    console.log(analysis);
+
+    // Example 2: Conversation
+    console.log("\n=== Example 2: Conversation ===");
+    const convo = new ConversationManager();
+    convo.setSystem("You are a helpful code review assistant.");
+    const response1 = await convo.chat("What are best practices for error handling in TypeScript?");
+    console.log(response1);
+
+    // Example 3: Tool-based review
+    console.log("\n=== Example 3: Tool-based Review ===");
+    const reviewCode = `
+      const x: any = eval("dangerous code");
+    `;
+    const toolReview = await reviewWithTools(reviewCode, "TypeScript", "Security review");
+    console.log(toolReview);
+
+    // Example 4: Batch review
+    console.log("\n=== Example 4: Batch Review ===");
+    const files = [
+      { name: "file1.js", content: "const x = 1;" },
+      { name: "file2.ts", content: "let y: any = 2;" },
+    ];
+    const batchResults = await batchReview(files);
+    console.log(JSON.stringify(batchResults, null, 2));
+
+  } catch (error) {
+    console.error("Error:", error);
+  }
 }
 
   </div>
