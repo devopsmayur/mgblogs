@@ -420,8 +420,7 @@ async function batchReview(files: Array<{name: string; content: string}>) {
 }
     </div>
     
-    <div class="code-scroll right">
-# Python with Anthropic SDK
+    <div class="code-scroll right"># Python with Anthropic SDK
 import anthropic
 import os
 from typing import List, Dict
@@ -430,7 +429,7 @@ client = anthropic.Anthropic(
     api_key=os.environ.get("ANTHROPIC_API_KEY")
 )
 
-def analyze_security(code: str) -> str:
+def analyze_security(code: str) -&gt; str:
     """Analyze code for security vulnerabilities"""
     message = client.messages.create(
         model="claude-sonnet-4-20250514",
@@ -460,7 +459,7 @@ class AIConversation:
     def __init__(self):
         self.history: List[Dict[str, str]] = []
     
-    def chat(self, user_message: str) -> str:
+    def chat(self, user_message: str) -&gt; str:
         """Maintain conversation context"""
         self.history.append({
             "role": "user",
@@ -481,7 +480,7 @@ class AIConversation:
         
         return assistant_msg
 
-# Tool use
+# Tool use for code review
 def review_with_tools(code: str, language: str):
     """Use tools for code review"""
     tools = [
@@ -515,14 +514,62 @@ def review_with_tools(code: str, language: str):
 import asyncio
 
 async def batch_analyze(files: List[Dict[str, str]]):
-    """Process multiple files"""
+    """Process multiple files concurrently"""
     async def analyze_file(file_info):
         result = analyze_security(file_info["content"])
         return {"file": file_info["name"], "result": result}
     
     tasks = [analyze_file(f) for f in files]
     return await asyncio.gather(*tasks)
-    </div>
+
+# Vision API support
+def analyze_image(image_path: str, prompt: str):
+    """Analyze images with Claude"""
+    import base64
+    
+    with open(image_path, "rb") as img_file:
+        image_data = base64.b64encode(img_file.read()).decode()
+    
+    message = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/jpeg",
+                            "data": image_data,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": prompt
+                    }
+                ],
+            }
+        ],
+    )
+    return message.content[0].text
+
+# Error handling
+def safe_api_call(prompt: str):
+    """API call with error handling"""
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.content[0].text
+    except anthropic.APIError as e:
+        return f"API Error: {e}"
+    except Exception as e:
+        return f"Unexpected error: {e}"
+
   </div>
 
   <!-- Foreground Content -->
