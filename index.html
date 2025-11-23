@@ -310,310 +310,286 @@
   <div class="background-box">
     <pre class="code-scroll left">
 """
-Anthropic Python – generic SDK scaffold (single file)
+Anthropic Python SDK – Generic, SDK-aligned scaffold (single file)
 
-Features
-- Env + client setup
-- Helpers (retry/backoff, text extraction)
-- send_message() for single-turn asks
-- stream_text() streaming helper
-- ConversationManager for stateful chat
-- Generic tool-calling loop that supports multiple tool calls and pluggable handlers
-- Batch utility for templated multi-item processing
+This file mirrors patterns from the official anthropic-sdk-python repository's README
+and helpers/docs. It provides:
+  • Sync & Async clients
+  • Plain messages API helpers
+  • Streaming (context manager + text_stream lens)
+  • Tool helpers via @beta_tool and tool_runner
+  • Token counting utility
+  • Message Batches helpers
+  • Robust error handling, retry/timeout configuration hooks
+  • Minimal Bedrock/Vertex adapters (optional) to show parity
 
-Requires: `pip install anthropic`
-Set env: ANTHROPIC_API_KEY, optional ANTHROPIC_MODEL_ID
+Requires: pip install anthropic
+Optionals: pip install anthropic[aiohttp]  # async aiohttp backend
+
+Environment:
+  ANTHROPIC_API_KEY=... (required)
+  ANTHROPIC_MODEL_ID=claude-sonnet-4-5-20250929 (optional; override as needed)
 """
 from __future__ import annotations
 
-import json
 import os
-import time
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+import json
+import logging
+from dataclasses import dataclass
+from typing import Any, Dict, Iterable, List, Optional
 
 import anthropic
+from anthropic import Anthropic, AsyncAnthropic
 
 # =====================
-# Config & Environment
+# Configuration
 # =====================
 API_KEY = os.environ.get("ANTHROPIC_API_KEY")
-MODEL = os.environ.get("ANTHROPIC_MODEL_ID", "claude-3-5-sonnet-latest")
+MODEL = os.environ.get("ANTHROPIC_MODEL_ID", "claude-sonnet-4-5-20250929")
 
 if not API_KEY:
-    raise RuntimeError("ANTHROPIC_API_KEY is not set in the environment")
+    raise RuntimeError("ANTHROPIC_API_KEY is not set")
 
-client = anthropic.Anthropic(api_key=API_KEY)
+# Global logger (opt-in via ANTHROPIC_LOG=info)
+log = logging.getLogger(__name__)
 
-
-# =====================
-# Types (lightweight)
-# =====================
-TextBlock = Dict[str, Any]  # expects {"type": "text", "text": "..."}
-ToolUseBlock = Dict[str, Any]  # expects {"type": "tool_use", "id": str, "name": str, "input": any}
-ToolResultBlock = Dict[str, Any]  # {"type":"tool_result", "tool_use_id": str, "content": str|list|dict}
-Message = Dict[str, Any]
+# Configure client-level retries/timeouts via ctor or .with_options on demand
+client = Anthropic(api_key=API_KEY)
+async_client = AsyncAnthropic(api_key=API_KEY)
 
 
 # =====================
-# Helpers
+# Basic Messages API (sync)
 # =====================
-
-def extract_text(blocks: List[Dict[str, Any]]) -> str:
-    """Concatenate all text blocks from a message.content list."""
-    parts: List[str] = []
-    for b in blocks or []:
-        if b.get("type") == "text":
-            parts.append(b.get("text", ""))
-    return "".join(parts)
-
-
-def user_msg(content: str) -> Message:
-    return {"role": "user", "content": content}
-
-
-def tool_result_msg(name: str, tool_use_id: str, content: Any, is_error: bool = False) -> Message:
-    return {
-        "role": "tool",
-        "name": name,
-        "tool_use_id": tool_use_id,
-        "content": json.dumps(content) if not isinstance(content, str) else content,
-        "is_error": is_error or None,
-    }
-
-
-def with_retries(fn: Callable[[], Any], attempts: int = 3, base_ms: int = 400) -> Any:
-    last_err: Optional[BaseException] = None
-    for i in range(attempts):
-        try:
-            return fn()
-        except BaseException as e:  # capture SDK/network errors
-            last_err = e
-            if i == attempts - 1:
-                break
-            time.sleep(base_ms / 1000 * (2 ** i))
-    assert last_err is not None
-    raise last_err
-
-
-# =====================
-# Core request wrappers
-# =====================
-
-def send_message(messages: List[Message], max_tokens: int = 1024) -> anthropic.types.Message:
-    """Single call convenience wrapper."""
-    return with_retries(
-        lambda: client.messages.create(
-            model=MODEL,
-            max_tokens=max_tokens,
-            messages=messages,
-        )
-    )
-
 
 def ask(prompt: str, *, max_tokens: int = 1024) -> str:
-    resp = send_message([user_msg(prompt)], max_tokens=max_tokens)
-    return extract_text(resp.content)  # type: ignore[arg-type]
+    """Single-turn convenience wrapper using the Messages API (sync)."""
+    msg = client.messages.create(
+        model=MODEL,
+        max_tokens=max_tokens,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return _extract_text(msg.content)
 
 
 # =====================
-# Streaming (SSE)
+# Basic Messages API (async)
+# =====================
+
+async def aask(prompt: str, *, max_tokens: int = 1024) -> str:
+    """Single-turn convenience wrapper using the Messages API (async)."""
+    msg = await async_client.messages.create(
+        model=MODEL,
+        max_tokens=max_tokens,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return _extract_text(msg.content)
+
+
+# =====================
+# Streaming helpers (sync + async)
 # =====================
 
 def stream_text(prompt: str, *, max_tokens: int = 1024) -> str:
-    """Stream tokens to stdout and return the final text (if available)."""
-    # The Python SDK provides a streaming context manager.
+    """Stream a response and return final assembled text if available."""
+    # Context manager exposes lenses like .text_stream and final message helpers.
     with client.messages.stream(
         model=MODEL,
         max_tokens=max_tokens,
-        messages=[user_msg(prompt)],
+        messages=[{"role": "user", "content": prompt}],
     ) as stream:
-        for event in stream:
-            if event.type == "content_block_delta" and getattr(event, "delta", None):
-                delta = event.delta
-                if getattr(delta, "type", None) == "text_delta":
-                    # Write streamed text as it arrives
-                    print(delta.text, end="", flush=True)
-        # Get the final assembled message (if provided by SDK version)
-        try:
-            final = stream.get_final_message()
-            return extract_text(final.content)  # type: ignore[arg-type]
-        except Exception:
-            return ""
+        # Print incremental text as it's generated
+        for text in stream.text_stream:
+            print(text, end="", flush=True)
+        print()
+        # Retrieve the final message object
+        final = stream.get_final_message()
+        return _extract_text(final.content)
+
+
+async def astream_text(prompt: str, *, max_tokens: int = 1024) -> str:
+    """Async streaming variant using the same helpers."""
+    async with async_client.messages.stream(
+        model=MODEL,
+        max_tokens=max_tokens,
+        messages=[{"role": "user", "content": prompt}],
+    ) as stream:
+        async for text in stream.text_stream:
+            print(text, end="", flush=True)
+        print()
+        final = await stream.get_final_message()
+        return _extract_text(final.content)
 
 
 # =====================
-# Conversation Manager
+# Stateful conversation (sync)
 # =====================
+
 @dataclass
-class ConversationManager:
-    history: List[Message] = field(default_factory=list)
+class Conversation:
+    history: List[Dict[str, Any]]
 
-    def add_system(self, content: str) -> None:
-        self.history.append({"role": "system", "content": content})
+    @classmethod
+    def start(cls, system_prompt: Optional[str] = None) -> "Conversation":
+        hist: List[Dict[str, Any]] = []
+        if system_prompt:
+            hist.append({"role": "system", "content": system_prompt})
+        return cls(history=hist)
 
     def chat(self, user_message: str, *, max_tokens: int = 2048) -> str:
-        self.history.append(user_msg(user_message))
-        res = send_message(self.history, max_tokens=max_tokens)
-        text = extract_text(res.content)  # type: ignore[arg-type]
+        self.history.append({"role": "user", "content": user_message})
+        msg = client.messages.create(
+            model=MODEL,
+            max_tokens=max_tokens,
+            messages=self.history,
+        )
+        text = _extract_text(msg.content)
         self.history.append({"role": "assistant", "content": text})
         return text
 
 
 # =====================
-# Generic Tool System (multi-call loop)
+# Tool helpers (@beta_tool + tool_runner)
 # =====================
-ToolHandler = Callable[[Any], Any]
+# The SDK exposes a decorator and a runner that orchestrates tool calls.
+# Keep tools generic — not tied to any specific business logic.
 
-@dataclass
-class Tool:
-    name: str
-    description: str
-    input_schema: Dict[str, Any]
-    handler: ToolHandler
+from anthropic import beta_tool  # type: ignore
 
+@beta_tool
+def echo(payload: dict) -> str:
+    """Echo any JSON payload back as a JSON string."""
+    return json.dumps({"echo": payload})
 
-def to_tool_spec(tools: Iterable[Tool]) -> List[Dict[str, Any]]:
-    return [
-        {
-            "name": t.name,
-            "description": t.description,
-            "input_schema": t.input_schema,
-        }
-        for t in tools
-    ]
-
-
-def run_tools_loop(prompt: str, tools: Iterable[Tool], *, max_tokens: int = 2048) -> str:
-    """Allow the model to call tools; execute them; return final assistant text.
-
-    - Supports multiple sequential tool calls in a single round.
-    - You can adapt this to maintain longer histories if desired.
-    """
-    tools = list(tools)
-    tool_map: Dict[str, Tool] = {t.name: t for t in tools}
-
-    # 1) Initial request advertising available tools
-    response = with_retries(
-        lambda: client.messages.create(
-            model=MODEL,
-            max_tokens=max_tokens,
-            tools=to_tool_spec(tools),
-            messages=[user_msg(prompt)],
-        )
-    )
-
-    # 2) While the assistant requests tool_use, resolve them in order
-    msgs: List[Message] = [user_msg(prompt)]
-    while True:
-        tool_calls: List[ToolUseBlock] = [
-            b for b in response.content  # type: ignore[attr-defined]
-            if isinstance(b, dict) and b.get("type") == "tool_use"
-        ]
-
-        if not tool_calls:
-            break
-
-        for call in tool_calls:
-            name = str(call.get("name"))
-            tool = tool_map.get(name)
-            if not tool:
-                # unknown tool; return an error result
-                msgs.append(tool_result_msg(name, str(call.get("id")), {"error": "Unknown tool"}, is_error=True))
-                continue
-            try:
-                result = tool.handler(call.get("input"))
-                msgs.append(tool_result_msg(name, str(call.get("id")), result))
-            except Exception as e:
-                msgs.append(tool_result_msg(name, str(call.get("id")), {"error": str(e)}, is_error=True))
-
-        # 3) Send accumulated tool results back to the model
-        response = with_retries(
-            lambda: client.messages.create(
-                model=MODEL,
-                max_tokens=max_tokens,
-                tools=to_tool_spec(tools),
-                messages=msgs,
-            )
-        )
-
-        # If the assistant returns more tool_use blocks, continue the loop.
-
-    return extract_text(response.content)  # type: ignore[arg-type]
-
-
-# =====================
-# Example generic tools (safe & simple)
-# =====================
-
-def tool_get_time(_: Any) -> Dict[str, str]:
+@beta_tool
+def time_now(_: dict | None = None) -> str:
+    """Return current UTC timestamp as JSON."""
     import datetime as _dt
-    now = _dt.datetime.now(_dt.timezone.utc).isoformat()
-    return {"now_utc": now}
+    return json.dumps({"now_utc": _dt.datetime.now(_dt.timezone.utc).isoformat()})
 
 
-def tool_echo(input: Any) -> Any:
-    return {"echo": input}
-
-
-# Predefined tool instances (optional)
-GET_TIME_TOOL = Tool(
-    name="get_time",
-    description="Returns the current UTC timestamp in ISO 8601 format.",
-    input_schema={"type": "object", "properties": {}, "additionalProperties": False},
-    handler=tool_get_time,
-)
-
-ECHO_TOOL = Tool(
-    name="echo",
-    description="Echos back any JSON given as input.",
-    input_schema={"type": "object", "additionalProperties": True},
-    handler=tool_echo,
-)
-
-
-# =====================
-# Batch utility (generic templating)
-# =====================
-
-def batch_process(items: Iterable[Any], template: str, *, max_tokens: int = 512) -> List[str]:
-    """Apply a prompt template to each item.
-    The template should contain "{item}" placeholder.
-    """
-    outputs: List[str] = []
-    for item in items:
-        prompt = template.format(item=item)
-        outputs.append(ask(prompt, max_tokens=max_tokens))
-    return outputs
-
-
-# =====================
-# Example usage (uncomment to run)
-# =====================
-if __name__ == "__main__":
-    # 1) Plain ask
-    print("\n=== ask() ===")
-    print(ask("Give me a one-sentence fun fact about octopuses."))
-
-    # 2) Streaming
-    print("\n=== stream_text() ===")
-    _ = stream_text("Write a two-line poem about autumn.")
-    print()  # newline after stream
-
-    # 3) Generic tools loop
-    print("\n=== run_tools_loop() with get_time + echo ===")
-    final = run_tools_loop(
-        "You may call tools as needed. First, get the current time, then echo {'k': 42}.",
-        tools=[GET_TIME_TOOL, ECHO_TOOL],
+def run_with_tools(prompt: str, *, tools: Optional[list] = None, max_tokens: int = 2048) -> str:
+    """Iteratively run with tool_runner until the model stops calling tools, then return the final text."""
+    tools = tools or [echo, time_now]
+    runner = client.beta.messages.tool_runner(
+        model=MODEL,
+        max_tokens=max_tokens,
+        tools=tools,
+        messages=[{"role": "user", "content": prompt}],
     )
-    print(final)
-
-    # 4) Batch
-    print("\n=== batch_process() ===")
-    out = batch_process(["tea", "coffee"], template="List 3 adjectives for {item}")
-    print(out)
+    last_text = ""
+    for message in runner:  # each iteration performs a round-trip
+        last_text = _extract_text(message.content)
+    return last_text
 
 
+# =====================
+# Token counting utility
+# =====================
+
+def count_tokens_for(prompt: str) -> int:
+    """Return the input token estimate for a message without creating it."""
+    count = client.messages.count_tokens(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return int(getattr(count, "input_tokens", 0))
+
+
+# =====================
+# Message Batches helpers (async is typical, sync supported by SDK as well)
+# =====================
+
+async def create_batch(requests: List[Dict[str, Any]]) -> Any:
+    """Create a batch. Each request uses the same schema as messages.create()."""
+    return await async_client.messages.batches.create(requests=requests)
+
+
+async def wait_and_collect_batch_results(batch_id: str) -> List[Dict[str, Any]]:
+    """Poll for results and return an array of {custom_id, result} objects.
+    Uses results() which returns an async stream of entries.
+    """
+    out: List[Dict[str, Any]] = []
+    async for entry in (await async_client.messages.batches.results(batch_id)):
+        if entry.result.type == "succeeded":
+            out.append({
+                "custom_id": entry.custom_id,
+                "content": _extract_text(entry.result.message.content),
+            })
+        else:
+            out.append({
+                "custom_id": entry.custom_id,
+                "error": getattr(entry.result, "error", None),
+            })
+    return out
+
+
+# =====================
+# Bedrock & Vertex adapters (optional examples)
+# =====================
+
+try:
+    from anthropic import AnthropicBedrock  # type: ignore
+    def bedrock_hello() -> str:
+        bclient = AnthropicBedrock()
+        msg = bclient.messages.create(
+            model="anthropic.claude-sonnet-4-5-20250929-v1:0",
+            max_tokens=100,
+            messages=[{"role": "user", "content": "Hello!"}],
+        )
+        return _extract_text(msg.content)
+except Exception:  # pragma: no cover
+    def bedrock_hello() -> str:
+        return "Bedrock extra not installed"
+
+try:
+    from anthropic import AnthropicVertex  # type: ignore
+    def vertex_hello() -> str:
+        vclient = AnthropicVertex()
+        msg = vclient.messages.create(
+            model="claude-sonnet-4@20250514",
+            max_tokens=100,
+            messages=[{"role": "user", "content": "Hello!"}],
+        )
+        return _extract_text(msg.content)
+except Exception:  # pragma: no cover
+    def vertex_hello() -> str:
+        return "Vertex extra not installed"
+
+
+# =====================
+# Error-handling patterns
+# =====================
+
+def robust_ask(prompt: str, *, max_tokens: int = 1024, max_retries: int = 2) -> str:
+    """Ask with basic retry/exception mapping using SDK error types."""
+    for attempt in range(max_retries + 1):
+        try:
+            return ask(prompt, max_tokens=max_tokens)
+        except anthropic.APIConnectionError as e:  # network / timeouts
+            log.warning("Connection issue: %s (attempt %s/%s)", e, attempt + 1, max_retries + 1)
+            if attempt == max_retries:
+                raise
+        except anthropic.RateLimitError as e:
+            log.warning("Rate limited: %s (attempt %s/%s)", e, attempt + 1, max_retries + 1)
+            if attempt == max_retries:
+                raise
+        except anthropic.APIStatusError as e:
+            log.error("HTTP %s: %s", getattr(e, "status_code", "?"), e.response)
+            raise
+
+
+# =====================
+# Utilities
+# =====================
+
+def _extract_text(blocks: List[Dict[str, Any]]) -> str:
+    """Concatenate all text blocks in a content array."""
+    parts: List[str] = []
+    for b in blocks or []:
+        if isinstance(b, dict) and b.get("type") == "text":
+            parts.append(b.get("text", ""))
+    return "".join(parts)
   </div>
 
   <!-- Foreground Content -->
