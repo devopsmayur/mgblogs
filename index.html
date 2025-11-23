@@ -1,676 +1,306 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mayur Gandhi | Regional Enterprise Technologist</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      width: 100%;
-      height: 100%;
-      font-family: 'Courier New', monospace;
-      background-color: #1e1e1e;
-      color: #e0e0e0;
-    }
-
-    .background-box {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      z-index: 0;
-    }
-
-    .code-scroll {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      width: 100%;
-      height: 200%;
-      font-size: 0.75rem;
-      white-space: pre;
-      line-height: 1.4;
-      color: rgba(15, 200, 100, 0.3);
-      animation: codeScroll 30s linear infinite;
-      padding: 2rem;
-    }
-
-    @keyframes codeScroll {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(-50%); }
-    }
-
-    .container {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 1;
-      background-color: rgba(30, 30, 30, 0.85);
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(13, 148, 80, 0.15);
-      text-align: center;
-      max-width: 800px;
-      width: 90%;
-      max-height: 85vh;
-      overflow-y: auto;
-    }
-
-    .container::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .container::-webkit-scrollbar-track {
-      background: rgba(30, 30, 30, 0.5);
-      border-radius: 10px;
-    }
-
-    .container::-webkit-scrollbar-thumb {
-      background: rgba(0, 255, 159, 0.3);
-      border-radius: 10px;
-    }
-
-    .container::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 255, 159, 0.5);
-    }
-
-    h1 {
-      font-size: 2rem;
-      color: #00ff9f;
-      margin-bottom: 0.5rem;
-    }
-
-    h2 {
-      font-size: 1.1rem;
-      color: #66ffc2;
-      font-weight: normal;
-      margin-bottom: 1rem;
-    }
-
-    .section-title {
-      font-size: 1.3rem;
-      color: #00ff9f;
-      margin-top: 2rem;
-      margin-bottom: 1rem;
-      text-align: left;
-      border-bottom: 2px solid rgba(0, 255, 159, 0.3);
-      padding-bottom: 0.5rem;
-    }
-
-    p {
-      line-height: 1.5;
-      margin-top: 0.5rem;
-      text-align: left;
-      font-size: 0.95rem;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin-top: 1rem;
-      text-align: left;
-    }
-
-    li {
-      margin: 0.4rem 0;
-      padding-left: 1.5rem;
-      position: relative;
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
-
-    li:before {
-      content: "▸";
-      position: absolute;
-      left: 0;
-      color: #00ff9f;
-    }
-
-    a {
-      color: #00ffcc;
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    .experience-item {
-      margin: 1.5rem 0;
-      padding: 1rem;
-      background-color: rgba(40, 40, 40, 0.6);
-      border-radius: 8px;
-      border-left: 3px solid #00ff9f;
-      text-align: left;
-    }
-
-    .job-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      margin-bottom: 0.5rem;
-    }
-
-    .job-title {
-      font-size: 1.1rem;
-      color: #00ffcc;
-      font-weight: bold;
-    }
-
-    .company {
-      color: #66ffc2;
-      font-size: 0.95rem;
-    }
-
-    .date {
-      color: #888;
-      font-size: 0.85rem;
-      font-style: italic;
-    }
-
-    .highlights {
-      list-style: none;
-      padding-left: 0;
-      margin-top: 0.5rem;
-    }
-
-    .highlights li {
-      font-size: 0.88rem;
-      line-height: 1.6;
-      margin: 0.3rem 0;
-    }
-
-    .skills-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-top: 1rem;
-      justify-content: flex-start;
-    }
-
-    .skill-tag {
-      background-color: rgba(0, 255, 159, 0.1);
-      color: #00ffcc;
-      padding: 0.4rem 0.8rem;
-      border-radius: 15px;
-      font-size: 0.85rem;
-      border: 1px solid rgba(0, 255, 159, 0.3);
-      transition: all 0.3s ease;
-    }
-
-    .skill-tag:hover {
-      background-color: rgba(0, 255, 159, 0.2);
-      border-color: #00ff9f;
-      transform: translateY(-2px);
-    }
-
-    .contact-links {
-      margin-top: 1.5rem;
-      margin-bottom: 1rem;
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .contact-links a {
-      color: #00ffcc;
-      font-size: 0.9rem;
-    }
-
-    .cert-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 0.8rem;
-      margin-top: 1rem;
-    }
-
-    .cert-item {
-      background-color: rgba(0, 255, 159, 0.1);
-      padding: 0.6rem 1rem;
-      border-radius: 8px;
-      border: 1px solid rgba(0, 255, 159, 0.3);
-      font-size: 0.85rem;
-      color: #00ffcc;
-      text-align: center;
-    }
-
-    .references {
-      background-color: rgba(40, 40, 40, 0.6);
-      padding: 1rem;
-      border-radius: 8px;
-      border-left: 3px solid #66ffc2;
-      margin-top: 1rem;
-    }
-
-    .reference-item {
-      margin: 0.5rem 0;
-      font-size: 0.88rem;
-      line-height: 1.5;
-    }
-
-    .reference-name {
-      color: #00ffcc;
-      font-weight: bold;
-    }
-
-    .reference-title {
-      color: #66ffc2;
-    }
-
-    @media (max-width: 768px) {
-      h1 {
-        font-size: 1.5rem;
-      }
-
-      h2 {
-        font-size: 1rem;
-      }
-
-      .container {
-        padding: 1.5rem;
-      }
-
-      .job-header {
-        flex-direction: column;
-      }
-
-      .cert-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Background DevOps Code -->
+<!-- Background Code - Split Screen -->
   <div class="background-box">
-    <div class="code-scroll">
-# Terraform Infrastructure
-provider "aws" {
-  region = "us-east-1"
+    <div class="code-scroll" style="width: 50%; left: 0;">
+// TypeScript with Anthropic SDK
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+async function analyzeCode(code: string): Promise<string> {
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1024,
+    messages: [
+      {
+        role: "user",
+        content: `Analyze this code for security issues: ${code}`,
+      },
+    ],
+  });
+  
+  return message.content[0].type === "text" 
+    ? message.content[0].text 
+    : "";
 }
 
-resource "aws_instance" "app_server" {
-  ami           = "ami-1234567890abcdef0"
-  instance_type = "t3.micro"
-  tags = {
-    Name = "DevOpsMayurDemo"
-  }
-}
+// Stream responses for real-time feedback
+async function streamCompletion(prompt: string) {
+  const stream = await client.messages.stream({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1024,
+    messages: [{ role: "user", content: prompt }],
+  });
 
-# Ansible Configuration
----
-- name: Configure Web Servers
-  hosts: webservers
-  become: yes
-  vars:
-    http_port: 80
-    max_clients: 200
-  tasks:
-    - name: Install nginx
-      apt:
-        name: nginx
-        state: latest
-        update_cache: yes
-      
-    - name: Start nginx service
-      service:
-        name: nginx
-        state: started
-        enabled: yes
-    
-    - name: Deploy configuration file
-      template:
-        src: templates/nginx.conf.j2
-        dest: /etc/nginx/nginx.conf
-      notify: Restart nginx
-
-  handlers:
-    - name: Restart nginx
-      service:
-        name: nginx
-        state: restarted
-
----
-# Vault Configuration
-vault {
-  address = "https://vault.example.com:8200"
-}
-
-# Enable AppRole auth method
-vault auth enable approle
-
-# Create a named role with policies
-vault write auth/approle/role/webapp \
-    token_ttl=1h \
-    token_max_ttl=4h \
-    token_policies="webapp-policy"
-
-# Create policy for the webapp
-vault policy write webapp-policy -<<EOF
-path "secret/data/webapp/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
-}
-
-path "database/creds/webapp" {
-  capabilities = ["read"]
-}
-EOF
-
-# Kubernetes Deployment
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: webapp
-  namespace: production
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: webapp
-  template:
-    metadata:
-      labels:
-        app: webapp
-    spec:
-      containers:
-      - name: webapp
-        image: webapp:v1.2.3
-        ports:
-        - containerPort: 8080
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: db-credentials
-              key: url
-
-# CI/CD Pipeline Configuration
-pipeline {
-  agent any
-  stages {
-    stage('Build') {
-      steps {
-        sh 'terraform init'
-        sh 'terraform plan'
-      }
-    }
-    stage('Deploy') {
-      steps {
-        sh 'terraform apply -auto-approve'
-      }
+  for await (const chunk of stream) {
+    if (chunk.type === "content_block_delta" && 
+        chunk.delta.type === "text_delta") {
+      process.stdout.write(chunk.delta.text);
     }
   }
 }
-    </div>
-  </div>
 
-  <!-- Foreground Content -->
-  <div class="container">
-    <h1>Mayur Gandhi</h1>
-    <h2>Regional Enterprise Technologist | Cloud Architect | AWS · GCP · Terraform · AIOps · Vault</h2>
+// Multi-turn conversation handler
+class ConversationManager {
+  private history: Anthropic.MessageParam[] = [];
+
+  async chat(userMessage: string): Promise<string> {
+    this.history.push({
+      role: "user",
+      content: userMessage,
+    });
+
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 2048,
+      messages: this.history,
+    });
+
+    const assistantMessage = response.content[0].type === "text"
+      ? response.content[0].text
+      : "";
+
+    this.history.push({
+      role: "assistant",
+      content: assistantMessage,
+    });
+
+    return assistantMessage;
+  }
+}
+
+// Tool use example for code analysis
+interface ToolDefinition {
+  name: string;
+  description: string;
+  input_schema: {
+    type: "object";
+    properties: Record<string, unknown>;
+    required: string[];
+  };
+}
+
+const codeReviewTool: ToolDefinition = {
+  name: "review_code",
+  description: "Reviews code for best practices",
+  input_schema: {
+    type: "object",
+    properties: {
+      language: { type: "string" },
+      code: { type: "string" },
+    },
+    required: ["language", "code"],
+  },
+};
+
+async function reviewWithTools(code: string, lang: string) {
+  const response = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 2048,
+    tools: [codeReviewTool],
+    messages: [
+      {
+        role: "user",
+        content: `Review this ${lang} code: ${code}`,
+      },
+    ],
+  });
+
+  return response;
+}
+
+// Batch processing for multiple files
+async function batchReview(files: Array<{name: string; content: string}>) {
+  const reviews = await Promise.all(
+    files.map(async (file) => {
+      const result = await analyzeCode(file.content);
+      return { file: file.name, review: result };
+    })
+  );
+  return reviews;
+}
+
+// Error handling wrapper
+async function safeCompletion(prompt: string): Promise<string> {
+  try {
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }],
+    });
+    return message.content[0].type === "text" 
+      ? message.content[0].text 
+      : "No response";
+  } catch (error) {
+    if (error instanceof Anthropic.APIError) {
+      console.error(`API Error: ${error.status} - ${error.message}`);
+    }
+    throw error;
+  }
+}
+    </div>
+    <div class="code-scroll" style="width: 50%; left: 50%;">
+# Python with Anthropic SDK
+import anthropic
+import os
+from typing import List, Dict, Generator
+
+client = anthropic.Anthropic(
+    api_key=os.environ.get("ANTHROPIC_API_KEY")
+)
+
+def analyze_security(code: str) -> str:
+    """Analyze code for security vulnerabilities"""
+    message = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": f"Analyze security issues: {code}"
+            }
+        ]
+    )
+    return message.content[0].text
+
+# Streaming for real-time responses
+def stream_response(prompt: str) -> Generator[str, None, None]:
+    """Stream Claude's response in real-time"""
+    with client.messages.stream(
+        model="claude-sonnet-4-20250514",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}],
+    ) as stream:
+        for text in stream.text_stream:
+            yield text
+
+# Conversation management
+class AIConversation:
+    def __init__(self):
+        self.history: List[Dict[str, str]] = []
     
-    <div class="contact-links">
-      <a href="mailto:mayurgandhi16@gmail.com">📧 mayurgandhi16@gmail.com</a>
-      <span style="color: #666;">|</span>
-      <a href="https://www.linkedin.com/in/devopsmayur" target="_blank">LinkedIn</a>
-      <span style="color: #666;">|</span>
-      <a href="https://github.com/devopsmayur" target="_blank">GitHub</a>
+    def chat(self, user_message: str) -> str:
+        """Maintain conversation context"""
+        self.history.append({
+            "role": "user",
+            "content": user_message
+        })
+        
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=2048,
+            messages=self.history
+        )
+        
+        assistant_msg = response.content[0].text
+        self.history.append({
+            "role": "assistant",
+            "content": assistant_msg
+        })
+        
+        return assistant_msg
+
+# Tool use for structured outputs
+def review_with_tools(code: str, language: str):
+    """Use tools for structured code review"""
+    tools = [
+        {
+            "name": "code_analyzer",
+            "description": "Analyzes code quality",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "language": {"type": "string"},
+                    "code": {"type": "string"},
+                    "severity": {"type": "string"}
+                },
+                "required": ["language", "code"]
+            }
+        }
+    ]
+    
+    response = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=2048,
+        tools=tools,
+        messages=[
+            {
+                "role": "user",
+                "content": f"Review {language}: {code}"
+            }
+        ]
+    )
+    
+    return response
+
+# Async batch processing
+import asyncio
+
+async def batch_analyze(files: List[Dict[str, str]]):
+    """Process multiple files concurrently"""
+    async def analyze_file(file_info):
+        result = analyze_security(file_info["content"])
+        return {"file": file_info["name"], "result": result}
+    
+    tasks = [analyze_file(f) for f in files]
+    return await asyncio.gather(*tasks)
+
+# Vision capabilities for diagrams
+def analyze_architecture(image_path: str) -> str:
+    """Analyze architecture diagrams"""
+    with open(image_path, "rb") as img:
+        image_data = base64.b64encode(img.read()).decode()
+    
+    message = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=1024,
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/png",
+                            "data": image_data,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": "Analyze this architecture"
+                    }
+                ],
+            }
+        ],
+    )
+    return message.content[0].text
+
+# Error handling
+def safe_completion(prompt: str) -> str:
+    """Completion with error handling"""
+    try:
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return message.content[0].text
+    except anthropic.APIError as e:
+        print(f"API Error: {e.status_code} - {e.message}")
+        raise
+
+# Rate limiting helper
+from time import sleep
+
+def rate_limited_calls(prompts: List[str], delay: float = 1.0):
+    """Make rate-limited API calls"""
+    results = []
+    for prompt in prompts:
+        result = safe_completion(prompt)
+        results.append(result)
+        sleep(delay)
+    return results
     </div>
-
-    <div class="section-title">Professional Summary</div>
-    <ul>
-      <li>Technologist with 20 years of experience leading innovation in Banking and Financial sector</li>
-      <li>8 years of experience productising, architecting, securing and selling AI Products</li>
-      <li>Leading automation initiatives for delivery of secure & reliable Application and AI Infrastructure</li>
-      <li>Lead architect for two production grade AIOps project, helping enterprise save operational costs</li>
-      <li>Led India's first API Banking platform and Multi-nodal blockchain platform deployments</li>
-      <li>Technology founder India CoE @ HashiCorp, leading GTM for HashiCorp India with IBM and RedHat</li>
-      <li>Founding member for solution engineering team for APJ/EMEA region at CodeRabbit.ai</li>
-      <li>Work with academia to help them understand real world applications of technology</li>
-    </ul>
-
-    <div class="section-title">Experience</div>
-
-    <div class="experience-item">
-      <div class="job-header">
-        <div>
-          <div class="job-title">Regional Enterprise Technologist APJ</div>
-          <div class="company">CodeRabbit.ai</div>
-        </div>
-        <div class="date">September 2025 - Present</div>
-      </div>
-      <ul class="highlights">
-        <li>Founding member and leading solution engineering efforts across APJ/EMEA</li>
-        <li>Developed the integration framework for Hybrid SaaS consumption for Enterprise customers</li>
-        <li>Led the integration efforts of On Prem solutions to Frontier models (OpenAI and Anthropic)</li>
-        <li>Helping enterprises reduce code review by 70% helping design and implement AI first solutions</li>
-        <li>GTM strategy for AI driven code review and integrating AI review</li>
-      </ul>
-    </div>
-
-    <div class="experience-item">
-      <div class="job-header">
-        <div>
-          <div class="job-title">Staff Engineer</div>
-          <div class="company">HashiCorp (IBM Company)</div>
-        </div>
-        <div class="date">February 2022 - August 2025</div>
-      </div>
-      <ul class="highlights">
-        <li>Spearheaded multi-cloud adoption in the Indian BFSI sector, driving cloud transformation for top banks, improving scalability and reducing operational costs with automation</li>
-        <li>Technology Founder of India CoE at HashiCorp</li>
-        <li>Leading GTM strategy for HashiCorp India with IBM and Red Hat, with a focus on automation</li>
-        <li>APJ Region Subject matter expert on HashiCorp product</li>
-        <li>Global top performer FY 24 & 25 selected for President's Club 2025</li>
-        <li>Achieved 200% ACV for two consecutive years consistently outperforming targets</li>
-        <li>Designed and implemented secure On Prem infrastructure supported high frequency trading</li>
-        <li>Provided IaC and Security consulting for the Digital arm of the Reserve Bank of India</li>
-        <li>Architected multi-cloud self-service infrastructure improving agility and reducing provisioning time from 7 days to 5 hours for enterprise customers helping in their automation journey</li>
-      </ul>
-    </div>
-
-    <div class="experience-item">
-      <div class="job-header">
-        <div>
-          <div class="job-title">Vice President</div>
-          <div class="company">Deutsche Bank</div>
-        </div>
-        <div class="date">July 2020 - January 2022</div>
-      </div>
-      <ul class="highlights">
-        <li>Formulated and executed technology-wide software strategy in collaboration with OCTO, resulting in the establishment of a Cloud CoE to streamline cloud operations and governance</li>
-        <li>Developed and implemented an operating model leveraging Cloud and Infrastructure as Code (Terraform) to enhance deployment speed and reliability</li>
-        <li>Redefined and optimised the Software Development Life Cycle (SDLC) and CI/CD strategy, improving development efficiency and reducing release times</li>
-        <li>Led architecture decisions as a Google-certified architect for Cloud, Blockchain, and AI projects within OCTO to align with strategic goals and ensure scalability</li>
-        <li>Engineered and implemented AI solutions, including architecting an AIOps platform that reduced MTTR from 200 hours to 3 minutes, achieving significant operational improvements</li>
-        <li>Piloted AIOps MVP, saving €7 million in costs and promoting the solution in-house by leveraging NLP models like SBERT, enhancing decision-making in investment banking incident and service request management</li>
-        <li>Led India Innovation team collaborating with Top Indian universities like IIT Bombay and startups</li>
-      </ul>
-    </div>
-
-    <div class="experience-item">
-      <div class="job-header">
-        <div>
-          <div class="job-title">Information Architect</div>
-          <div class="company">IBM GTS Labs</div>
-        </div>
-        <div class="date">November 2017 - July 2020</div>
-      </div>
-      <ul class="highlights">
-        <li>Led a client-facing architecture team for an AIOps product, applying deep technical expertise in data management and architecture to deliver tailored solutions and drive client trust</li>
-        <li>Directed solution engineering teams, providing multi-cloud and AIOps solutions for leading European banks to enhance operational efficiencies and resilience</li>
-        <li>Engineered a cost-effective AIOps solution leveraging open-source Kubernetes, significantly reducing infrastructure expenses from $5 million to $10,000 while maintaining high availability and scalability</li>
-        <li>Working with leading university in India to help them understand Cyber security and Blockchain use cases and solutions</li>
-      </ul>
-    </div>
-
-    <div class="experience-item">
-      <div class="job-header">
-        <div>
-          <div class="job-title">Senior Vice President</div>
-          <div class="company">Yes Bank</div>
-        </div>
-        <div class="date">April 2015 - October 2017</div>
-      </div>
-      <ul class="highlights">
-        <li>Led Platform Integration, Innovation and Cloud Computing Centre of Excellence, leading a team of 18 consultants with a budget of 3 million USD and yearly savings of 600K USD</li>
-        <li>Formulated digital projects in Strategy, Consulting and Operations also part of digital steering committee which comprises of all senior management including CIO & CDO</li>
-        <li>Implemented India's first API Banking and Blockchain solution</li>
-        <li>Led the greenfield implementation of Enterprise service bus and Banks Core banking migration</li>
-      </ul>
-    </div>
-
-    <div class="experience-item">
-      <div class="job-header">
-        <div>
-          <div class="job-title">Platform Architect</div>
-          <div class="company">Atos</div>
-        </div>
-        <div class="date">October 2014 - April 2015</div>
-      </div>
-      <ul class="highlights">
-        <li>Technical Architect / Business Analyst for Canopy-Cloud providing PaaS solutions (Pivotal)</li>
-      </ul>
-    </div>
-
-    <div class="experience-item">
-      <div class="job-header">
-        <div>
-          <div class="job-title">Cloud Architect</div>
-          <div class="company">IBM Watson Labs</div>
-        </div>
-        <div class="date">September 2009 - September 2014</div>
-      </div>
-      <ul class="highlights">
-        <li>Led Middleware teams in India. Cloud Architect for IBM Watson labs on SoftLayer Cloud</li>
-        <li>Led Middleware implementation for Royal Bank of Scotland India</li>
-      </ul>
-    </div>
-
-    <div class="experience-item">
-      <div class="job-header">
-        <div>
-          <div class="job-title">Senior Engineer</div>
-          <div class="company">Tech Mahindra</div>
-        </div>
-        <div class="date">July 2008 - September 2009</div>
-      </div>
-      <ul class="highlights">
-        <li>Middleware Environment owner for Alltel (Verizon)</li>
-      </ul>
-    </div>
-
-    <div class="experience-item">
-      <div class="job-header">
-        <div>
-          <div class="job-title">Consultant</div>
-          <div class="company">Siemens India (SISL)</div>
-        </div>
-        <div class="date">March 2007 - July 2008</div>
-      </div>
-      <ul class="highlights">
-        <li>WebSphere Middleware Lead for Xerox UK</li>
-      </ul>
-    </div>
-
-    <div class="experience-item">
-      <div class="job-header">
-        <div>
-          <div class="job-title">Assistant Manager</div>
-          <div class="company">HDFC Bank</div>
-        </div>
-        <div class="date">February 2005 - March 2007</div>
-      </div>
-      <ul class="highlights">
-        <li>Implemented first NEFT/RTGS solution for the bank, Implemented many WebSphere migrations</li>
-      </ul>
-    </div>
-
-    <div class="section-title">Skills & Technologies</div>
-    <div class="skills-grid">
-      <div class="skill-tag">AWS</div>
-      <div class="skill-tag">GCP</div>
-      <div class="skill-tag">HashiCorp Vault</div>
-      <div class="skill-tag">Terraform</div>
-      <div class="skill-tag">Consul</div>
-      <div class="skill-tag">Nomad</div>
-      <div class="skill-tag">API Management</div>
-      <div class="skill-tag">IBM Middleware</div>
-      <div class="skill-tag">DevOps</div>
-      <div class="skill-tag">Ansible</div>
-      <div class="skill-tag">OpenShift</div>
-      <div class="skill-tag">AIOps</div>
-      <div class="skill-tag">LLM</div>
-      <div class="skill-tag">AI Infrastructure</div>
-      <div class="skill-tag">Security Engineering</div>
-    </div>
-
-    <div class="section-title">Certifications</div>
-    <div class="cert-grid">
-      <div class="cert-item">Open Group Speaker</div>
-      <div class="cert-item">IBM Recognised Speaker</div>
-      <div class="cert-item">Google Certified Architect</div>
-      <div class="cert-item">Google Certified ML Engineer</div>
-      <div class="cert-item">IBM Certified Cloud Architect</div>
-      <div class="cert-item">IBM Certified Cloud Advisor</div>
-      <div class="cert-item">HashiCorp Certified Terraform Associate</div>
-    </div>
-
-    <div class="section-title">Public Speaking & Events</div>
-    <ul>
-      <li><a href="https://www.hashicorp.com/en/events/webinars/snapshot-demo-enhancing-security-with-vault-s-saml-authentication-feature-india" target="_blank">Snapshot Demo for Securing Digital assets</a></li>
-      <li><a href="https://www.hashicorp.com/en/events/webinars/snapshots-india-no-code-provisioning-with-terraform-cloud" target="_blank">Snapshot Demo No Code provisioning</a></li>
-      <li><a href="https://www.hashicorp.com/en/events/webinars/snapshots-india-vault-and-the-kubernetes-secrets-engine" target="_blank">Snapshot Demo Vault and Kubernetes secret engine</a></li>
-      <li><a href="https://bfsi.economictimes.indiatimes.com/finnext2022" target="_blank">Speaker at a FinTech event 2022</a></li>
-      <li><a href="https://www.strategink.com/events/2025/conference/thrive-in-the-world-of-ai-technology-mumbai/?urlid=listing-strategink&utm_source=chatgpt.com" target="_blank">Speaker Agentic AI Leadership</a></li>
-    </ul>
-
-    <div class="section-title">Education</div>
-    <div class="experience-item">
-      <div class="job-header">
-        <div>
-          <div class="job-title">Bachelor of Engineering - Computer Science</div>
-          <div class="company">Mumbai University</div>
-        </div>
-        <div class="date">2004</div>
-      </div>
-    </div>
-
-    <div class="section-title">References</div>
-    <div class="references">
-      <div class="reference-item">
-        <span class="reference-name">Armon Dadgar</span> - <span class="reference-title">Co-Founder, CTO HashiCorp an IBM Company</span>
-      </div>
-      <div class="reference-item">
-        <span class="reference-name">Dave Mcjannet</span> - <span class="reference-title">Former CEO HashiCorp an IBM Company</span>
-      </div>
-      <div class="reference-item">
-        <span class="reference-name">Rajesh Thapar</span> - <span class="reference-title">CISO, NSE (National Stock Exchange)</span>
-      </div>
-      <div class="reference-item">
-        <span class="reference-name">Anup Purohit</span> - <span class="reference-title">Former Global CIO, Wipro</span>
-      </div>
-      <div class="reference-item">
-        <span class="reference-name">Erik Papir</span> - <span class="reference-title">VP WW Engineering leader Palo Alto Networks</span>
-      </div>
-      <div class="reference-item">
-        <span class="reference-name">Suhail Gulzar</span> - <span class="reference-title">Solutions Engineering leader Neo4j</span>
-      </div>
-      <div class="reference-item">
-        <span class="reference-name">Chandresh Dedhia</span> - <span class="reference-title">CTO State Bank of India Securities</span>
-      </div>
-    </div>
-
   </div>
-
-</body>
-</html>
