@@ -309,372 +309,310 @@
   <!-- Background Code - Split Screen -->
   <div class="background-box">
     <pre class="code-scroll left">
-// Refactored Anthropic code reviewer (TypeScript)
-// Single-file example with modular functions, stronger types, retries, and a tool-calling loop.
+"""
+Anthropic Python – generic SDK scaffold (single file)
 
-import Anthropic from "@anthropic-ai/sdk";
+Features
+- Env + client setup
+- Helpers (retry/backoff, text extraction)
+- send_message() for single-turn asks
+- stream_text() streaming helper
+- ConversationManager for stateful chat
+- Generic tool-calling loop that supports multiple tool calls and pluggable handlers
+- Batch utility for templated multi-item processing
 
-/**
- * ===== Configuration =====
- */
-const MODEL = process.env.ANTHROPIC_MODEL_ID ?? "claude-sonnet-4-20250514";
-const API_KEY = process.env.ANTHROPIC_API_KEY;
+Requires: `pip install anthropic`
+Set env: ANTHROPIC_API_KEY, optional ANTHROPIC_MODEL_ID
+"""
+from __future__ import annotations
 
-/**
- * ===== Types =====
- */
-export type TextBlock = { type: "text"; text: string };
-export type ToolUseBlock = {
-  type: "tool_use";
-  id: string;
-  name: string;
-  input: unknown;
-};
-export type ContentBlock = TextBlock | ToolUseBlock;
+import json
+import os
+import time
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
-export interface Message {
-  role: "user" | "assistant";
-  content: string | ContentBlock[];
-}
+import anthropic
 
-/**
- * ===== Guardrails =====
- */
-function ensureEnv() {
-  if (!API_KEY) throw new Error("ANTHROPIC_API_KEY is not set");
-}
+# =====================
+# Config & Environment
+# =====================
+API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+MODEL = os.environ.get("ANTHROPIC_MODEL_ID", "claude-3-5-sonnet-latest")
 
-/**
- * ===== Client factory =====
- */
-function getClient() {
-  ensureEnv();
-  return new Anthropic({ apiKey: API_KEY });
-}
+if not API_KEY:
+    raise RuntimeError("ANTHROPIC_API_KEY is not set in the environment")
 
-/**
- * ===== Helpers =====
- */
-function extractText(content: ContentBlock[]): string {
-  return content
-    .filter((b): b is TextBlock => b && b.type === "text")
-    .map((b) => b.text)
-    .join("");
-}
+client = anthropic.Anthropic(api_key=API_KEY)
 
-function buildUserMessage(content: string): Message {
-  return { role: "user", content };
-}
 
-/**
- * Basic retry with exponential backoff for transient errors
- */
-async function withRetries<T>(fn: () => Promise<T>, attempts = 3, baseMs = 500): Promise<T> {
-  let lastErr: unknown;
-  for (let i = 0; i < attempts; i++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastErr = err;
-      if (i === attempts - 1) break;
-      const delay = baseMs * Math.pow(2, i);
-      await new Promise((r) => setTimeout(r, delay));
+# =====================
+# Types (lightweight)
+# =====================
+TextBlock = Dict[str, Any]  # expects {"type": "text", "text": "..."}
+ToolUseBlock = Dict[str, Any]  # expects {"type": "tool_use", "id": str, "name": str, "input": any}
+ToolResultBlock = Dict[str, Any]  # {"type":"tool_result", "tool_use_id": str, "content": str|list|dict}
+Message = Dict[str, Any]
+
+
+# =====================
+# Helpers
+# =====================
+
+def extract_text(blocks: List[Dict[str, Any]]) -> str:
+    """Concatenate all text blocks from a message.content list."""
+    parts: List[str] = []
+    for b in blocks or []:
+        if b.get("type") == "text":
+            parts.append(b.get("text", ""))
+    return "".join(parts)
+
+
+def user_msg(content: str) -> Message:
+    return {"role": "user", "content": content}
+
+
+def tool_result_msg(name: str, tool_use_id: str, content: Any, is_error: bool = False) -> Message:
+    return {
+        "role": "tool",
+        "name": name,
+        "tool_use_id": tool_use_id,
+        "content": json.dumps(content) if not isinstance(content, str) else content,
+        "is_error": is_error or None,
     }
-  }
-  throw lastErr;
-}
 
-/**
- * ===== Core request wrappers =====
- */
-export async function sendMessage(
-  messages: Message[], 
-  maxTokens = 1024,
-  systemPrompt?: string
-) {
-  const client = getClient();
-  return withRetries(() =>
-    client.messages.create({
-      model: MODEL,
-      max_tokens: maxTokens,
-      system: systemPrompt,
-      messages: messages as any,
-    })
-  );
-}
 
-export async function analyzeCode(code: string): Promise<string> {
-  const res = await sendMessage([
-    buildUserMessage(`Analyze this code for security, correctness, and performance.\n\n${code}`),
-  ]);
-  return extractText(res.content as ContentBlock[]);
-}
+def with_retries(fn: Callable[[], Any], attempts: int = 3, base_ms: int = 400) -> Any:
+    last_err: Optional[BaseException] = None
+    for i in range(attempts):
+        try:
+            return fn()
+        except BaseException as e:  # capture SDK/network errors
+            last_err = e
+            if i == attempts - 1:
+                break
+            time.sleep(base_ms / 1000 * (2 ** i))
+    assert last_err is not None
+    raise last_err
 
-/**
- * Streaming printer — writes text deltas to stdout
- */
-export async function streamCompletion(prompt: string, maxTokens = 1024) {
-  const client = getClient();
-  const stream = await client.messages.stream({
-    model: MODEL,
-    max_tokens: maxTokens,
-    messages: [buildUserMessage(prompt)],
-  });
 
-  for await (const evt of stream) {
-    if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta") {
-      process.stdout.write(evt.delta.text);
-    }
-  }
-}
+# =====================
+# Core request wrappers
+# =====================
 
-/**
- * ===== Conversation manager =====
- */
-export class ConversationManager {
-  private history: Message[] = [];
-  private systemPrompt?: string;
+def send_message(messages: List[Message], max_tokens: int = 1024) -> anthropic.types.Message:
+    """Single call convenience wrapper."""
+    return with_retries(
+        lambda: client.messages.create(
+            model=MODEL,
+            max_tokens=max_tokens,
+            messages=messages,
+        )
+    )
 
-  setSystem(content: string) {
-    this.systemPrompt = content;
-  }
 
-  async chat(userMessage: string, maxTokens = 2048): Promise<string> {
-    this.history.push({ role: "user", content: userMessage });
+def ask(prompt: str, *, max_tokens: int = 1024) -> str:
+    resp = send_message([user_msg(prompt)], max_tokens=max_tokens)
+    return extract_text(resp.content)  # type: ignore[arg-type]
 
-    const res = await sendMessage(this.history, maxTokens, this.systemPrompt);
-    const assistantText = extractText(res.content as ContentBlock[]);
 
-    this.history.push({ role: "assistant", content: assistantText });
-    return assistantText;
-  }
+# =====================
+# Streaming (SSE)
+# =====================
 
-  getHistory() {
-    return [...this.history];
-  }
+def stream_text(prompt: str, *, max_tokens: int = 1024) -> str:
+    """Stream tokens to stdout and return the final text (if available)."""
+    # The Python SDK provides a streaming context manager.
+    with client.messages.stream(
+        model=MODEL,
+        max_tokens=max_tokens,
+        messages=[user_msg(prompt)],
+    ) as stream:
+        for event in stream:
+            if event.type == "content_block_delta" and getattr(event, "delta", None):
+                delta = event.delta
+                if getattr(delta, "type", None) == "text_delta":
+                    # Write streamed text as it arrives
+                    print(delta.text, end="", flush=True)
+        # Get the final assembled message (if provided by SDK version)
+        try:
+            final = stream.get_final_message()
+            return extract_text(final.content)  # type: ignore[arg-type]
+        except Exception:
+            return ""
 
-  clearHistory() {
-    this.history = [];
-  }
-}
 
-/**
- * ===== Tooling: Define a "review_code" tool and handle calls =====
- */
-export const codeReviewTool = {
-  name: "review_code",
-  description: "Reviews code for security, correctness, performance, and style.",
-  input_schema: {
-    type: "object",
-    properties: {
-      language: { type: "string" },
-      code: { type: "string" },
-      goals: { type: "string", description: "Specific review goals or concerns" },
-    },
-    required: ["language", "code"],
-  },
-};
+# =====================
+# Conversation Manager
+# =====================
+@dataclass
+class ConversationManager:
+    history: List[Message] = field(default_factory=list)
 
-// Minimal local implementation — replace with your real logic
-function runLocalCodeReview(input: { language: string; code: string; goals?: string }) {
-  const issues: string[] = [];
-  
-  if (!input.code.trim()) {
-    issues.push("No code provided.");
-  }
-  
-  if (/eval\s*\(/.test(input.code)) {
-    issues.push("Avoid using eval() - it's a security risk.");
-  }
-  
-  if (/any\b/.test(input.code) && input.language.toLowerCase().includes("ts")) {
-    issues.push("Prefer precise types over 'any' in TypeScript.");
-  }
+    def add_system(self, content: str) -> None:
+        self.history.append({"role": "system", "content": content})
 
-  if (!/['"`]use strict['"`]/.test(input.code) && input.language.toLowerCase() === "javascript") {
-    issues.push("Consider adding 'use strict' at the top of JavaScript files.");
-  }
+    def chat(self, user_message: str, *, max_tokens: int = 2048) -> str:
+        self.history.append(user_msg(user_message))
+        res = send_message(self.history, max_tokens=max_tokens)
+        text = extract_text(res.content)  # type: ignore[arg-type]
+        self.history.append({"role": "assistant", "content": text})
+        return text
 
-  return {
-    ok: issues.length === 0,
-    issues,
-    summary: issues.length 
-      ? "Potential issues detected." 
-      : "No obvious issues found (manual review still recommended).",
-  };
-}
 
-/**
- * Tool call handler with proper message format
- */
-export async function reviewWithTools(
-  code: string, 
-  lang: string, 
-  goals?: string
-): Promise<string> {
-  const client = getClient();
-  
-  const initialMessage = buildUserMessage(
-    `Review ${lang} code with goals: ${goals ?? "(none)"}.\n\n${code}`
-  );
+# =====================
+# Generic Tool System (multi-call loop)
+# =====================
+ToolHandler = Callable[[Any], Any]
 
-  // 1) Initial ask with tool availability
-  let response = await withRetries(() =>
-    client.messages.create({
-      model: MODEL,
-      max_tokens: 2048,
-      tools: [codeReviewTool],
-      messages: [initialMessage],
-    })
-  );
+@dataclass
+class Tool:
+    name: str
+    description: str
+    input_schema: Dict[str, Any]
+    handler: ToolHandler
 
-  // 2) Check for tool calls
-  const content = response.content as ContentBlock[];
-  const toolCalls = content.filter((b): b is ToolUseBlock => b.type === "tool_use");
-  
-  if (toolCalls.length > 0) {
-    // Handle the first tool call
-    const call = toolCalls[0];
-    const result = runLocalCodeReview(call.input as any);
 
-    // 3) Send tool_result back with proper format
-    const messages: Message[] = [
-      initialMessage,
-      {
-        role: "assistant",
-        content: content, // Include the original assistant response with tool_use
-      },
-      {
-        role: "user",
-        content: [
-          {
-            type: "tool_result",
-            tool_use_id: call.id,
-            content: JSON.stringify(result, null, 2),
-          },
-        ] as any,
-      },
-    ];
-
-    response = await withRetries(() =>
-      client.messages.create({
-        model: MODEL,
-        max_tokens: 2048,
-        tools: [codeReviewTool],
-        messages: messages as any,
-      })
-    );
-  }
-
-  return extractText(response.content as ContentBlock[]);
-}
-
-/**
- * ===== Batch processing =====
- */
-export async function batchReview(files: Array<{ name: string; content: string }>) {
-  return Promise.all(
-    files.map(async (file) => {
-      try {
-        const result = await analyzeCode(file.content);
-        return { 
-          file: file.name, 
-          review: result,
-          success: true 
-        };
-      } catch (error) {
-        return {
-          file: file.name,
-          review: `Error: ${error instanceof Error ? error.message : String(error)}`,
-          success: false,
-        };
-      }
-    })
-  );
-}
-
-/**
- * ===== Vision API support =====
- */
-export async function analyzeImage(
-  imageData: string, 
-  mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-  prompt: string
-): Promise<string> {
-  const client = getClient();
-  
-  const response = await withRetries(() =>
-    client.messages.create({
-      model: MODEL,
-      max_tokens: 1024,
-      messages: [
+def to_tool_spec(tools: Iterable[Tool]) -> List[Dict[str, Any]]:
+    return [
         {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: mediaType,
-                data: imageData,
-              },
-            },
-            {
-              type: "text",
-              text: prompt,
-            },
-          ],
-        } as any,
-      ],
-    })
-  );
+            "name": t.name,
+            "description": t.description,
+            "input_schema": t.input_schema,
+        }
+        for t in tools
+    ]
 
-  return extractText(response.content as ContentBlock[]);
-}
 
-/**
- * ===== Example usage =====
- */
-export async function main() {
-  try {
-    // Example 1: Simple code analysis
-    console.log("=== Example 1: Analyze Code ===");
-    const simpleCode = `
-      function add(a, b) {
-        return a + b;
-      }
-    `;
-    const analysis = await analyzeCode(simpleCode);
-    console.log(analysis);
+def run_tools_loop(prompt: str, tools: Iterable[Tool], *, max_tokens: int = 2048) -> str:
+    """Allow the model to call tools; execute them; return final assistant text.
 
-    // Example 2: Conversation
-    console.log("\n=== Example 2: Conversation ===");
-    const convo = new ConversationManager();
-    convo.setSystem("You are a helpful code review assistant.");
-    const response1 = await convo.chat("What are best practices for error handling in TypeScript?");
-    console.log(response1);
+    - Supports multiple sequential tool calls in a single round.
+    - You can adapt this to maintain longer histories if desired.
+    """
+    tools = list(tools)
+    tool_map: Dict[str, Tool] = {t.name: t for t in tools}
 
-    // Example 3: Tool-based review
-    console.log("\n=== Example 3: Tool-based Review ===");
-    const reviewCode = `
-      const x: any = eval("dangerous code");
-    `;
-    const toolReview = await reviewWithTools(reviewCode, "TypeScript", "Security review");
-    console.log(toolReview);
+    # 1) Initial request advertising available tools
+    response = with_retries(
+        lambda: client.messages.create(
+            model=MODEL,
+            max_tokens=max_tokens,
+            tools=to_tool_spec(tools),
+            messages=[user_msg(prompt)],
+        )
+    )
 
-    // Example 4: Batch review
-    console.log("\n=== Example 4: Batch Review ===");
-    const files = [
-      { name: "file1.js", content: "const x = 1;" },
-      { name: "file2.ts", content: "let y: any = 2;" },
-    ];
-    const batchResults = await batchReview(files);
-    console.log(JSON.stringify(batchResults, null, 2));
+    # 2) While the assistant requests tool_use, resolve them in order
+    msgs: List[Message] = [user_msg(prompt)]
+    while True:
+        tool_calls: List[ToolUseBlock] = [
+            b for b in response.content  # type: ignore[attr-defined]
+            if isinstance(b, dict) and b.get("type") == "tool_use"
+        ]
 
-  } catch (error) {
-    console.error("Error:", error);
-  }
-}
+        if not tool_calls:
+            break
+
+        for call in tool_calls:
+            name = str(call.get("name"))
+            tool = tool_map.get(name)
+            if not tool:
+                # unknown tool; return an error result
+                msgs.append(tool_result_msg(name, str(call.get("id")), {"error": "Unknown tool"}, is_error=True))
+                continue
+            try:
+                result = tool.handler(call.get("input"))
+                msgs.append(tool_result_msg(name, str(call.get("id")), result))
+            except Exception as e:
+                msgs.append(tool_result_msg(name, str(call.get("id")), {"error": str(e)}, is_error=True))
+
+        # 3) Send accumulated tool results back to the model
+        response = with_retries(
+            lambda: client.messages.create(
+                model=MODEL,
+                max_tokens=max_tokens,
+                tools=to_tool_spec(tools),
+                messages=msgs,
+            )
+        )
+
+        # If the assistant returns more tool_use blocks, continue the loop.
+
+    return extract_text(response.content)  # type: ignore[arg-type]
+
+
+# =====================
+# Example generic tools (safe & simple)
+# =====================
+
+def tool_get_time(_: Any) -> Dict[str, str]:
+    import datetime as _dt
+    now = _dt.datetime.now(_dt.timezone.utc).isoformat()
+    return {"now_utc": now}
+
+
+def tool_echo(input: Any) -> Any:
+    return {"echo": input}
+
+
+# Predefined tool instances (optional)
+GET_TIME_TOOL = Tool(
+    name="get_time",
+    description="Returns the current UTC timestamp in ISO 8601 format.",
+    input_schema={"type": "object", "properties": {}, "additionalProperties": False},
+    handler=tool_get_time,
+)
+
+ECHO_TOOL = Tool(
+    name="echo",
+    description="Echos back any JSON given as input.",
+    input_schema={"type": "object", "additionalProperties": True},
+    handler=tool_echo,
+)
+
+
+# =====================
+# Batch utility (generic templating)
+# =====================
+
+def batch_process(items: Iterable[Any], template: str, *, max_tokens: int = 512) -> List[str]:
+    """Apply a prompt template to each item.
+    The template should contain "{item}" placeholder.
+    """
+    outputs: List[str] = []
+    for item in items:
+        prompt = template.format(item=item)
+        outputs.append(ask(prompt, max_tokens=max_tokens))
+    return outputs
+
+
+# =====================
+# Example usage (uncomment to run)
+# =====================
+if __name__ == "__main__":
+    # 1) Plain ask
+    print("\n=== ask() ===")
+    print(ask("Give me a one-sentence fun fact about octopuses."))
+
+    # 2) Streaming
+    print("\n=== stream_text() ===")
+    _ = stream_text("Write a two-line poem about autumn.")
+    print()  # newline after stream
+
+    # 3) Generic tools loop
+    print("\n=== run_tools_loop() with get_time + echo ===")
+    final = run_tools_loop(
+        "You may call tools as needed. First, get the current time, then echo {'k': 42}.",
+        tools=[GET_TIME_TOOL, ECHO_TOOL],
+    )
+    print(final)
+
+    # 4) Batch
+    print("\n=== batch_process() ===")
+    out = batch_process(["tea", "coffee"], template="List 3 adjectives for {item}")
+    print(out)
+
 
   </div>
 
