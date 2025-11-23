@@ -29,7 +29,7 @@
 
     .code-scroll {
       position: absolute;
-      top: 100%;
+      top: 0;
       width: 50%;
       height: 200%;
       font-size: 0.7rem;
@@ -43,16 +43,18 @@
 
     .code-scroll.left {
       left: 0;
+      animation-delay: 0s;
     }
 
     .code-scroll.right {
       left: 50%;
       color: rgba(100, 150, 255, 0.3);
+      animation-delay: -20s;
     }
 
     @keyframes codeScroll {
       0% { transform: translateY(0); }
-      100% { transform: translateY(-50%); }
+      100% { transform: translateY(-100%); }
     }
 
     .container {
