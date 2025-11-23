@@ -1,3 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mayur Gandhi | Regional Enterprise Technologist</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      font-family: 'Courier New', monospace;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+    }
+
+    .background-box {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+      display: flex;
+    }
+
+    .code-scroll {
+      position: absolute;
+      top: 0;
+      width: 50%;
+      height: 200%;
+      font-size: 0.7rem;
+      white-space: pre;
+      line-height: 1.4;
+      color: rgba(15, 200, 100, 0.3);
+      animation: codeScroll 80s linear infinite;
+      padding: 2rem;
+      box-sizing: border-box;
+    }
+
+    .code-scroll.left {
+      left: 0;
+      animation-delay: 0s;
+    }
+
+    .code-scroll.right {
+      left: 50%;
+      color: rgba(100, 150, 255, 0.3);
+      animation-delay: -40s;
+    }
+
+    @keyframes codeScroll {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-100%); }
+    }
+
+    .container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+      background-color: rgba(30, 30, 30, 0.85);
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(13, 148, 80, 0.15);
+      text-align: center;
+      max-width: 800px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .container::-webkit-scrollbar-track {
+      background: rgba(30, 30, 30, 0.5);
+      border-radius: 10px;
+    }
+
+    .container::-webkit-scrollbar-thumb {
+      background: rgba(0, 255, 159, 0.3);
+      border-radius: 10px;
+    }
+
+    .container::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 255, 159, 0.5);
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #00ff9f;
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      color: #66ffc2;
+      font-weight: normal;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.3rem;
+      color: #00ff9f;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      text-align: left;
+      border-bottom: 2px solid rgba(0, 255, 159, 0.3);
+      padding-bottom: 0.5rem;
+    }
+
+    p {
+      line-height: 1.5;
+      margin-top: 0.5rem;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 1rem;
+      text-align: left;
+    }
+
+    li {
+      margin: 0.4rem 0;
+      padding-left: 1.5rem;
+      position: relative;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    li:before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: #00ff9f;
+    }
+
+    a {
+      color: #00ffcc;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .experience-item {
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background-color: rgba(40, 40, 40, 0.6);
+      border-radius: 8px;
+      border-left: 3px solid #00ff9f;
+      text-align: left;
+    }
+
+    .job-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+    }
+
+    .job-title {
+      font-size: 1.1rem;
+      color: #00ffcc;
+      font-weight: bold;
+    }
+
+    .company {
+      color: #66ffc2;
+      font-size: 0.95rem;
+    }
+
+    .date {
+      color: #888;
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+
+    .highlights {
+      list-style: none;
+      padding-left: 0;
+      margin-top: 0.5rem;
+    }
+
+    .highlights li {
+      font-size: 0.88rem;
+      line-height: 1.6;
+      margin: 0.3rem 0;
+    }
+
+    .skills-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      justify-content: flex-start;
+    }
+
+    .skill-tag {
+      background-color: rgba(0, 255, 159, 0.1);
+      color: #00ffcc;
+      padding: 0.4rem 0.8rem;
+      border-radius: 15px;
+      font-size: 0.85rem;
+      border: 1px solid rgba(0, 255, 159, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .skill-tag:hover {
+      background-color: rgba(0, 255, 159, 0.2);
+      border-color: #00ff9f;
+      transform: translateY(-2px);
+    }
+
+    .contact-links {
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .contact-links a {
+      color: #00ffcc;
+      font-size: 0.9rem;
+    }
+
+    .cert-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+
+    .cert-item {
+      background-color: rgba(0, 255, 159, 0.1);
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 255, 159, 0.3);
+      font-size: 0.85rem;
+      color: #00ffcc;
+      text-align: center;
+    }
+
+    .references {
+      background-color: rgba(40, 40, 40, 0.6);
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 3px solid #66ffc2;
+      margin-top: 1rem;
+    }
+
+    .reference-item {
+      margin: 0.5rem 0;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+
+    .reference-name {
+      color: #00ffcc;
+      font-weight: bold;
+    }
+
+    .reference-title {
+      color: #66ffc2;
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      h2 {
+        font-size: 1rem;
+      }
+
+      .container {
+        padding: 1.5rem;
+      }
+
+      .job-header {
+        flex-direction: column;
+      }
+
+      .cert-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .code-scroll {
+        font-size: 0.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Code - Split Screen -->
+  <div class="background-box">
+    <pre class="code-scroll left">
 """
 Anthropic Python SDK – Generic, SDK-aligned scaffold (single file)
 
@@ -279,27 +590,257 @@ def _extract_text(blocks: List[Dict[str, Any]]) -> str:
         if isinstance(b, dict) and b.get("type") == "text":
             parts.append(b.get("text", ""))
     return "".join(parts)
+  </div>
 
+  <!-- Foreground Content -->
+  <div class="container">
+    <h1>Mayur Gandhi</h1>
+    <h2>Regional Enterprise Technologist | Cloud Architect | AWS · GCP · Terraform · AIOps · Vault</h2>
+    
+    <div class="contact-links">
+      <a href="mailto:mayurgandhi16@gmail.com">📧 mayurgandhi16@gmail.com</a>
+      <span style="color: #666;">|</span>
+      <a href="https://www.linkedin.com/in/devopsmayur" target="_blank">LinkedIn</a>
+      <span style="color: #666;">|</span>
+      <a href="https://github.com/devopsmayur" target="_blank">GitHub</a>
+    </div>
 
-# =====================
-# Demonstration
-# =====================
-if __name__ == "__main__":
-    print("=== ask ===")
-    print(ask("Say hello there!"))
+    <div class="section-title">Professional Summary</div>
+    <ul>
+      <li>Technologist with 20 years of experience leading innovation in Banking and Financial sector</li>
+      <li>8 years of experience productising, architecting, securing and selling AI Products</li>
+      <li>Leading automation initiatives for delivery of secure & reliable Application and AI Infrastructure</li>
+      <li>Lead architect for two production grade AIOps project, helping enterprise save operational costs</li>
+      <li>Led India's first API Banking platform and Multi-nodal blockchain platform deployments</li>
+      <li>Technology founder India CoE @ HashiCorp, leading GTM for HashiCorp India with IBM and RedHat</li>
+      <li>Founding member for solution engineering team for APJ/EMEA region at CodeRabbit.ai</li>
+      <li>Work with academia to help them understand real world applications of technology</li>
+    </ul>
 
-    print("\n=== stream ===")
-    _ = stream_text("Write a 2-line poem about databases.")
+    <div class="section-title">Experience</div>
 
-    print("\n=== conversation ===")
-    convo = Conversation.start("You are concise and friendly.")
-    print(convo.chat("Suggest a weekend plan in Bengaluru."))
+    <div class="experience-item">
+      <div class="job-header">
+        <div>
+          <div class="job-title">Regional Enterprise Technologist APJ</div>
+          <div class="company">CodeRabbit.ai</div>
+        </div>
+        <div class="date">September 2025 - Present</div>
+      </div>
+      <ul class="highlights">
+        <li>Founding member and leading solution engineering efforts across APJ/EMEA</li>
+        <li>Developed the integration framework for Hybrid SaaS consumption for Enterprise customers</li>
+        <li>Led the integration efforts of On Prem solutions to Frontier models (OpenAI and Anthropic)</li>
+        <li>Helping enterprises reduce code review by 70% helping design and implement AI first solutions</li>
+        <li>GTM strategy for AI driven code review and integrating AI review</li>
+      </ul>
+    </div>
 
-    print("\n=== tools (runner) ===")
-    print(run_with_tools("First, tell me the time; then echo {'k': 42}."))
+    <div class="experience-item">
+      <div class="job-header">
+        <div>
+          <div class="job-title">Staff Engineer</div>
+          <div class="company">HashiCorp (IBM Company)</div>
+        </div>
+        <div class="date">February 2022 - August 2025</div>
+      </div>
+      <ul class="highlights">
+        <li>Spearheaded multi-cloud adoption in the Indian BFSI sector, driving cloud transformation for top banks</li>
+        <li>Technology Founder of India CoE at HashiCorp</li>
+        <li>Leading GTM strategy for HashiCorp India with IBM and Red Hat</li>
+        <li>APJ Region Subject matter expert on HashiCorp product</li>
+        <li>Global top performer FY 24 & 25 selected for President's Club 2025</li>
+        <li>Achieved 200% ACV for two consecutive years consistently outperforming targets</li>
+        <li>Designed and implemented secure On Prem infrastructure supported high frequency trading</li>
+        <li>Provided IaC and Security consulting for the Digital arm of the Reserve Bank of India</li>
+      </ul>
+    </div>
 
-    print("\n=== token count ===")
-    print(count_tokens_for("Hello, world"))
+    <div class="experience-item">
+      <div class="job-header">
+        <div>
+          <div class="job-title">Vice President</div>
+          <div class="company">Deutsche Bank</div>
+        </div>
+        <div class="date">July 2020 - January 2022</div>
+      </div>
+      <ul class="highlights">
+        <li>Formulated and executed technology-wide software strategy in collaboration with OCTO</li>
+        <li>Developed and implemented an operating model leveraging Cloud and Infrastructure as Code (Terraform)</li>
+        <li>Engineered and implemented AI solutions, including architecting an AIOps platform that reduced MTTR from 200 hours to 3 minutes</li>
+        <li>Piloted AIOps MVP, saving €7 million in costs</li>
+        <li>Led India Innovation team collaborating with Top Indian universities like IIT Bombay</li>
+      </ul>
+    </div>
 
-    # Batches demo (async) left to user environment; example usage:
-    #   python -c "import asyncio, anthropic_scaffold as a; print(asyncio.run(a.create_batch([...])) )"
+    <div class="experience-item">
+      <div class="job-header">
+        <div>
+          <div class="job-title">Information Architect</div>
+          <div class="company">IBM GTS Labs</div>
+        </div>
+        <div class="date">November 2017 - July 2020</div>
+      </div>
+      <ul class="highlights">
+        <li>Led a client-facing architecture team for an AIOps product</li>
+        <li>Directed solution engineering teams, providing multi-cloud and AIOps solutions for leading European banks</li>
+        <li>Engineered a cost-effective AIOps solution reducing infrastructure expenses from $5 million to $10,000</li>
+      </ul>
+    </div>
+
+    <div class="experience-item">
+      <div class="job-header">
+        <div>
+          <div class="job-title">Senior Vice President</div>
+          <div class="company">Yes Bank</div>
+        </div>
+        <div class="date">April 2015 - October 2017</div>
+      </div>
+      <ul class="highlights">
+        <li>Led Platform Integration, Innovation and Cloud Computing Centre of Excellence</li>
+        <li>Implemented India's first API Banking and Blockchain solution</li>
+        <li>Led the greenfield implementation of Enterprise service bus and Banks Core banking migration</li>
+      </ul>
+    </div>
+
+    <div class="experience-item">
+      <div class="job-header">
+        <div>
+          <div class="job-title">Platform Architect</div>
+          <div class="company">Atos</div>
+        </div>
+        <div class="date">October 2014 - April 2015</div>
+      </div>
+      <ul class="highlights">
+        <li>Technical Architect for Canopy-Cloud providing PaaS solutions (Pivotal)</li>
+      </ul>
+    </div>
+
+    <div class="experience-item">
+      <div class="job-header">
+        <div>
+          <div class="job-title">Cloud Architect</div>
+          <div class="company">IBM Watson Labs</div>
+        </div>
+        <div class="date">September 2009 - September 2014</div>
+      </div>
+      <ul class="highlights">
+        <li>Led Middleware teams in India. Cloud Architect for IBM Watson labs on SoftLayer Cloud</li>
+      </ul>
+    </div>
+
+    <div class="experience-item">
+      <div class="job-header">
+        <div>
+          <div class="job-title">Senior Engineer</div>
+          <div class="company">Tech Mahindra</div>
+        </div>
+        <div class="date">July 2008 - September 2009</div>
+      </div>
+      <ul class="highlights">
+        <li>Middleware Environment owner for Alltel (Verizon)</li>
+      </ul>
+    </div>
+
+    <div class="experience-item">
+      <div class="job-header">
+        <div>
+          <div class="job-title">Consultant</div>
+          <div class="company">Siemens India (SISL)</div>
+        </div>
+        <div class="date">March 2007 - July 2008</div>
+      </div>
+      <ul class="highlights">
+        <li>WebSphere Middleware Lead for Xerox UK</li>
+      </ul>
+    </div>
+
+    <div class="experience-item">
+      <div class="job-header">
+        <div>
+          <div class="job-title">Assistant Manager</div>
+          <div class="company">HDFC Bank</div>
+        </div>
+        <div class="date">February 2005 - March 2007</div>
+      </div>
+      <ul class="highlights">
+        <li>Implemented first NEFT/RTGS solution for the bank</li>
+      </ul>
+    </div>
+
+    <div class="section-title">Skills & Technologies</div>
+    <div class="skills-grid">
+      <div class="skill-tag">AWS</div>
+      <div class="skill-tag">GCP</div>
+      <div class="skill-tag">HashiCorp Vault</div>
+      <div class="skill-tag">Terraform</div>
+      <div class="skill-tag">Consul</div>
+      <div class="skill-tag">Nomad</div>
+      <div class="skill-tag">API Management</div>
+      <div class="skill-tag">DevOps</div>
+      <div class="skill-tag">Ansible</div>
+      <div class="skill-tag">OpenShift</div>
+      <div class="skill-tag">AIOps</div>
+      <div class="skill-tag">LLM</div>
+      <div class="skill-tag">AI Infrastructure</div>
+      <div class="skill-tag">Security Engineering</div>
+    </div>
+
+    <div class="section-title">Certifications</div>
+    <div class="cert-grid">
+      <div class="cert-item">Open Group Speaker</div>
+      <div class="cert-item">IBM Recognised Speaker</div>
+      <div class="cert-item">Google Certified Architect</div>
+      <div class="cert-item">Google Certified ML Engineer</div>
+      <div class="cert-item">IBM Certified Cloud Architect</div>
+      <div class="cert-item">HashiCorp Certified Terraform Associate</div>
+    </div>
+
+    <div class="section-title">Public Speaking & Events</div>
+    <ul>
+      <li><a href="https://www.hashicorp.com/en/events/webinars/snapshot-demo-enhancing-security-with-vault-s-saml-authentication-feature-india" target="_blank">Snapshot Demo for Securing Digital assets</a></li>
+      <li><a href="https://www.hashicorp.com/en/events/webinars/snapshots-india-no-code-provisioning-with-terraform-cloud" target="_blank">Snapshot Demo No Code provisioning</a></li>
+      <li><a href="https://bfsi.economictimes.indiatimes.com/finnext2022" target="_blank">Speaker at a FinTech event 2022</a></li>
+      <li><a href="https://www.strategink.com/events/2025/conference/thrive-in-the-world-of-ai-technology-mumbai/" target="_blank">Speaker Agentic AI Leadership</a></li>
+    </ul>
+
+    <div class="section-title">Education</div>
+    <div class="experience-item">
+      <div class="job-header">
+        <div>
+          <div class="job-title">Bachelor of Engineering - Computer Science</div>
+          <div class="company">Mumbai University</div>
+        </div>
+        <div class="date">2004</div>
+      </div>
+    </div>
+
+    <div class="section-title">References</div>
+    <div class="references">
+      <div class="reference-item">
+        <span class="reference-name">Armon Dadgar</span> - <span class="reference-title">Co-Founder, CTO HashiCorp an IBM Company</span>
+      </div>
+      <div class="reference-item">
+        <span class="reference-name">Dave Mcjannet</span> - <span class="reference-title">Former CEO HashiCorp an IBM Company</span>
+      </div>
+      <div class="reference-item">
+        <span class="reference-name">Rajesh Thapar</span> - <span class="reference-title">CISO, NSE (National Stock Exchange)</span>
+      </div>
+      <div class="reference-item">
+        <span class="reference-name">Anup Purohit</span> - <span class="reference-title">Former Global CIO, Wipro</span>
+      </div>
+      <div class="reference-item">
+        <span class="reference-name">Erik Papir</span> - <span class="reference-title">VP WW Engineering leader Palo Alto Networks</span>
+      </div>
+      <div class="reference-item">
+        <span class="reference-name">Suhail Gulzar</span> - <span class="reference-title">Solutions Engineering leader Neo4j</span>
+      </div>
+      <div class="reference-item">
+        <span class="reference-name">Chandresh Dedhia</span> - <span class="reference-title">CTO State Bank of India Securities</span>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
